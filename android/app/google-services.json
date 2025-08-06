@@ -1,0 +1,39 @@
+{
+    "project_info": {
+        "project_number": "907566503666",
+        "project_id": "askida788",
+        "storage_bucket": "askida788.firebasestorage.app"
+    },
+    "client": [
+        {
+            "client_info": {
+                "mobilesdk_app_id": "1:907566503666:android:a5b6c7d8e9f0a1b2a8e26b",
+                "android_client_info": {
+                    "package_name": "com.example.askida"
+                }
+            },
+            "oauth_client": [
+                {
+                    "client_id": "907566503666-abcdefghijklmnopqrstuvwxyz123456.apps.googleusercontent.com",
+                    "client_type": 3
+                }
+            ],
+            "api_key": [
+                {
+                    "current_key": "AIzaSyDqmbY38YXJqkO8cSUk4FUmEe2aHMMVGn8"
+                }
+            ],
+            "services": {
+                "appinvite_service": {
+                    "other_platform_oauth_client": [
+                        {
+                            "client_id": "907566503666-abcdefghijklmnopqrstuvwxyz123456.apps.googleusercontent.com",
+                            "client_type": 3
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "configuration_version": "1"
+}

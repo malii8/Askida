@@ -1,0 +1,23 @@
+{
+  "flutter": {
+    "platforms": {
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "askida788",
+          "configurations": {
+            "ios": "1:907566503666:ios:93f0e9c728dadaf5a8e26b",
+            "macos": "1:907566503666:ios:93f0e9c728dadaf5a8e26b",
+            "web": "1:907566503666:web:c3386729d6dbae6ca8e26b",
+            "windows": "1:907566503666:web:2362b846b108c3c5a8e26b"
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "database": "(default)",
+    "location": "europe-west3",
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  }
+}
