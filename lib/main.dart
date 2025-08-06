@@ -139,11 +139,6 @@ class MainApp extends StatelessWidget {
             builder: (context) => const QRValidatorScreen(),
           );
         }
-        if (settings.name == '/notifications') {
-          return MaterialPageRoute(
-            builder: (context) => const NotificationsScreen(),
-          );
-        }
         if (settings.name == '/corporateProductsList') {
           return MaterialPageRoute(
             builder: (context) => const CorporateProductsListScreen(),
@@ -165,95 +160,122 @@ class MainApp extends StatelessWidget {
         if (settings.name == '/feed') {
           return MaterialPageRoute(builder: (context) => const FeedScreen());
         }
+        if (settings.name == '/notifications') {
+          return MaterialPageRoute(
+            builder: (context) => const NotificationsScreen(),
+          );
+        }
         return null;
       },
-      home:
-          firebaseEnabled
-              ? StreamBuilder<User?>(
-                stream: FirebaseAuth.instance.authStateChanges(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Scaffold(
-                      body: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const CircularProgressIndicator(),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Askıda\'ya Hoş Geldiniz',
-                              style: Theme.of(context).textTheme.headlineSmall,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Yükleniyor...',
-                              style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(color: Colors.grey.shade600),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }
+      home: firebaseEnabled ? const AuthWrapper() : const FirebaseErrorScreen(),
+    );
+  }
+}
 
-                  if (snapshot.hasError) {
-                    return Scaffold(
-                      body: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.error,
-                              size: 64,
-                              color: Colors.red,
-                            ),
-                            const SizedBox(height: 16),
-                            const Text('Bir hata oluştu'),
-                            const SizedBox(height: 8),
-                            ElevatedButton(
-                              onPressed: () {
-                                Navigator.of(context).pushNamedAndRemoveUntil(
-                                  '/',
-                                  (route) => false,
-                                );
-                              },
-                              child: const Text('Tekrar Dene'),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }
+class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({super.key});
 
-                  if (snapshot.hasData && snapshot.data != null) {
-                    return const MainAppScreen();
-                  } else {
-                    return const AuthScreen();
-                  }
-                },
-              )
-              : Scaffold(
-                body: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.error, size: 64, color: Colors.red),
-                      const SizedBox(height: 16),
-                      const Text('Firebase Bağlantı Hatası'),
-                      const SizedBox(height: 8),
-                      const Text('Uygulama Firebase olmadan çalışamıyor.'),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () {
-                          // Uygulamayı yeniden başlat
-                          main();
-                        },
-                        child: const Text('Tekrar Dene'),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        // Kullanıcı varsa MainAppScreen, yoksa AuthScreen - loading yok
+        if (snapshot.hasData && snapshot.data != null) {
+          return const MainAppScreen();
+        } else {
+          return const AuthScreen();
+        }
+      },
+    );
+  }
+}
+
+class LoadingScreen extends StatelessWidget {
+  const LoadingScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(height: 16),
+            Text(
+              'Askıda\'ya Hoş Geldiniz',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Yükleniyor...',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class ErrorScreen extends StatelessWidget {
+  const ErrorScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error, size: 64, color: Colors.red),
+            const SizedBox(height: 16),
+            const Text('Bir hata oluştu'),
+            const SizedBox(height: 8),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(
+                  context,
+                ).pushNamedAndRemoveUntil('/', (route) => false);
+              },
+              child: const Text('Tekrar Dene'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class FirebaseErrorScreen extends StatelessWidget {
+  const FirebaseErrorScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error, size: 64, color: Colors.red),
+            const SizedBox(height: 16),
+            const Text('Firebase Bağlantı Hatası'),
+            const SizedBox(height: 8),
+            const Text('Uygulama Firebase olmadan çalışamıyor.'),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                // Uygulamayı yeniden başlat
+                main();
+              },
+              child: const Text('Tekrar Dene'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -326,9 +348,18 @@ class _MainAppScreenState extends State<MainAppScreen> {
       }
     } catch (e) {
       developer.log('Error loading user data: $e', name: 'MainAppScreen');
-      // Hata durumunda kullanıcıyı çıkış yapmaya zorla
-      if (mounted) {
-        await FirebaseAuth.instance.signOut();
+      // Sadece kritik hatalar için çıkış yap
+      if (e.toString().contains('permission-denied') ||
+          e.toString().contains('unauthenticated')) {
+        if (mounted) {
+          await FirebaseAuth.instance.signOut();
+        }
+      } else {
+        // Diğer hatalarda kullanıcıyı çıkış yapmaya zorlamayalım
+        developer.log(
+          'Non-critical error in _loadUserData, continuing...',
+          name: 'MainAppScreen',
+        );
       }
     }
   }
@@ -403,27 +434,22 @@ class _MainAppScreenState extends State<MainAppScreen> {
     if (_userModel?.isApproved != true) return null;
 
     if (_userModel?.userType == UserType.corporate) {
-      // Kurumsal kullanıcılar için - QR Validator ve Askı Oluştur
-      if (_currentIndex != 0) return null; // Sadece ana sayfada göster
+      // Kurumsal kullanıcılar için - sadece Ana Sayfa'da butonları göster
+      if (_currentIndex != 0) return null;
 
       return Column(
-        mainAxisAlignment: MainAxisAlignment.end,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // QR Doğrula butonu
           FloatingActionButton(
-            heroTag: "qr_validator",
+            heroTag: "qr_scanner",
             onPressed: () {
-              Navigator.pushNamed(context, '/qrValidator');
+              Navigator.pushNamed(context, '/qrScanner');
             },
-            backgroundColor: Colors.green,
+            backgroundColor: Theme.of(context).colorScheme.secondary,
             foregroundColor: Colors.white,
-            tooltip: 'QR Doğrula',
             child: const Icon(Icons.qr_code_scanner),
           ),
-
           const SizedBox(height: 16),
-
-          // Askı Oluştur butonu
           FloatingActionButton.extended(
             heroTag: "create_post",
             onPressed: () async {

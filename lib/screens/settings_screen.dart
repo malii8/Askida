@@ -75,15 +75,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _logout() async {
     try {
-      // Firebase'den çıkış yap
       await FirebaseAuth.instance.signOut();
-      
-      // Ana sayfaya yönlendir (StreamBuilder otomatik olarak AuthScreen'e yönlendirecek)
+
+      // Çıkış yaptıktan sonra giriş ekranına yönlendir
       if (mounted) {
-        Navigator.of(context).pushNamedAndRemoveUntil(
-          '/',
-          (route) => false,
-        );
+        Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
       }
     } catch (e) {
       if (mounted) {

@@ -272,7 +272,7 @@ class _NotificationTile extends StatelessWidget {
         ),
         onTap: onTap,
         tileColor:
-            notification.isRead ? null : Colors.blue.withOpacity( 0.1),
+            notification.isRead ? null : Colors.blue.withValues(alpha: 0.1),
       ),
     );
   }
@@ -317,7 +317,7 @@ class _NotificationTile extends StatelessWidget {
     }
 
     return CircleAvatar(
-      backgroundColor: color.withOpacity( 0.2),
+      backgroundColor: color.withValues(alpha: 0.2),
       child: Icon(icon, color: color),
     );
   }
@@ -337,6 +337,3 @@ class _NotificationTile extends StatelessWidget {
     }
   }
 }
-
-
-
