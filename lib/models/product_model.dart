@@ -5,6 +5,8 @@ class ProductModel {
   final String description;
   final String corporateId;
   final String corporateName;
+  final double? price;
+  final String? imageUrl;
   final DateTime createdAt;
   final DateTime? updatedAt;
   final bool isActive;
@@ -16,6 +18,8 @@ class ProductModel {
     required this.description,
     required this.corporateId,
     required this.corporateName,
+    this.price,
+    this.imageUrl,
     required this.createdAt,
     this.updatedAt,
     this.isActive = true,
@@ -29,6 +33,8 @@ class ProductModel {
       'description': description,
       'corporateId': corporateId,
       'corporateName': corporateName,
+      'price': price,
+      'imageUrl': imageUrl,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
       'isActive': isActive,
@@ -43,6 +49,8 @@ class ProductModel {
       description: json['description'] ?? '',
       corporateId: json['corporateId'] ?? '',
       corporateName: json['corporateName'] ?? '',
+      price: json['price']?.toDouble(),
+      imageUrl: json['imageUrl'],
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt:
           json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
@@ -74,6 +82,3 @@ class ProductModel {
     );
   }
 }
-
-
-

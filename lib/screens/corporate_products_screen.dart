@@ -57,7 +57,7 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
         foregroundColor: Colors.white,
         actions: [
           IconButton(
-            onPressed: _showAddProductDialog,
+            onPressed: () => _showProductDialog(),
             icon: const Icon(Icons.add),
             tooltip: 'Yeni Ürün Ekle',
           ),
@@ -113,7 +113,7 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
           ),
           const SizedBox(height: 32),
           ElevatedButton.icon(
-            onPressed: _showAddProductDialog,
+            onPressed: () => _showProductDialog(),
             icon: const Icon(Icons.add),
             label: const Text('İlk Ürünü Ekle'),
             style: ElevatedButton.styleFrom(
@@ -133,22 +133,44 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
         final product = products[index];
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
+          elevation: 2,
           child: ListTile(
             leading: CircleAvatar(
               backgroundColor: Theme.of(context).colorScheme.primary,
-              child: Text(
-                product.name[0].toUpperCase(),
-                style: const TextStyle(color: Colors.white),
+              child: Icon(
+                _getCategoryIcon(product.category),
+                color: Colors.white,
+                size: 20,
               ),
             ),
-            title: Text(product.name),
+            title: Text(
+              product.name,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Kategori: ${product.category}'),
+                Text(
+                  product.category,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontSize: 12,
+                  ),
+                ),
+                if (product.price != null)
+                  Text(
+                    '₺ ${product.price!.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                      fontSize: 14,
+                    ),
+                  ),
                 if (product.description.isNotEmpty)
                   Text(
                     product.description,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
                   ),
               ],
@@ -175,7 +197,7 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
                   ],
               onSelected: (value) {
                 if (value == 'edit') {
-                  _showEditProductDialog(product);
+                  _showProductDialog(product: product);
                 } else if (value == 'delete') {
                   _deleteProduct(product.id);
                 }
@@ -187,18 +209,16 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
     );
   }
 
-  void _showAddProductDialog() {
-    _showProductDialog();
-  }
-
-  void _showEditProductDialog(ProductModel product) {
-    _showProductDialog(product: product);
-  }
-
   void _showProductDialog({ProductModel? product}) {
     final nameController = TextEditingController(text: product?.name ?? '');
     final descriptionController = TextEditingController(
       text: product?.description ?? '',
+    );
+    final priceController = TextEditingController(
+      text: product?.price?.toString() ?? '',
+    );
+    final imageUrlController = TextEditingController(
+      text: product?.imageUrl ?? '',
     );
     final categories = _productService.getCategories();
     String selectedCategory = product?.category ?? categories.first;
@@ -209,49 +229,182 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
           (context) => StatefulBuilder(
             builder:
                 (context, setDialogState) => AlertDialog(
-                  title: Text(
-                    product == null ? 'Yeni Ürün Ekle' : 'Ürünü Düzenle',
-                  ),
-                  content: Column(
-                    mainAxisSize: MainAxisSize.min,
+                  title: Row(
                     children: [
-                      TextField(
-                        controller: nameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Ürün Adı',
-                          border: OutlineInputBorder(),
-                        ),
+                      Icon(
+                        Icons.inventory,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
-                      const SizedBox(height: 16),
-                      DropdownButtonFormField<String>(
-                        value: selectedCategory,
-                        decoration: const InputDecoration(
-                          labelText: 'Kategori',
-                          border: OutlineInputBorder(),
-                        ),
-                        items:
-                            categories.map((category) {
-                              return DropdownMenuItem(
-                                value: category,
-                                child: Text(category),
-                              );
-                            }).toList(),
-                        onChanged: (value) {
-                          setDialogState(() {
-                            selectedCategory = value!;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextField(
-                        controller: descriptionController,
-                        maxLines: 3,
-                        decoration: const InputDecoration(
-                          labelText: 'Açıklama (Opsiyonel)',
-                          border: OutlineInputBorder(),
-                        ),
+                      const SizedBox(width: 8),
+                      Text(
+                        product == null ? 'Yeni Ürün Ekle' : 'Ürünü Düzenle',
+                        style: const TextStyle(fontSize: 18),
                       ),
                     ],
+                  ),
+                  content: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Bilgi kartı
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.blue.shade200),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.info,
+                                color: Colors.blue.shade700,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              const Expanded(
+                                child: Text(
+                                  'Mağazanıza yeni ürün ekleyin',
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Ürün Adı
+                        TextField(
+                          controller: nameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Ürün Adı *',
+                            hintText: 'Ürün adını girin',
+                            prefixIcon: Icon(Icons.inventory),
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Kategori
+                        DropdownButtonFormField<String>(
+                          value: selectedCategory,
+                          decoration: const InputDecoration(
+                            labelText: 'Kategori *',
+                            prefixIcon: Icon(Icons.category),
+                            border: OutlineInputBorder(),
+                          ),
+                          items:
+                              categories.map((category) {
+                                return DropdownMenuItem(
+                                  value: category,
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        _getCategoryIcon(category),
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(category),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                          onChanged: (value) {
+                            setDialogState(() {
+                              selectedCategory = value!;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Fiyat
+                        TextField(
+                          controller: priceController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: 'Fiyat (₺) *',
+                            hintText: '250',
+                            prefixIcon: Icon(Icons.attach_money),
+                            prefixText: '₺ ',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Açıklama
+                        TextField(
+                          controller: descriptionController,
+                          maxLines: 3,
+                          decoration: const InputDecoration(
+                            labelText: 'Açıklama *',
+                            hintText: 'Ürün hakkında detaylar...',
+                            prefixIcon: Icon(Icons.description),
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Resim URL
+                        TextField(
+                          controller: imageUrlController,
+                          decoration: const InputDecoration(
+                            labelText: 'Ürün Resmi URL (Opsiyonel)',
+                            hintText: 'https://example.com/image.jpg',
+                            prefixIcon: Icon(Icons.image),
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Bilgi metinleri
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.info_outline,
+                                    size: 16,
+                                    color: Colors.blue,
+                                  ),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Bilgi',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                '• Eklediğiniz ürünler mağaza sayfasında görünecek',
+                                style: TextStyle(fontSize: 11),
+                              ),
+                              Text(
+                                '• Kullanıcılar bu ürünleri askıya alabilecek',
+                                style: TextStyle(fontSize: 11),
+                              ),
+                              Text(
+                                '• Fiyat sadece referans amaçlıdır',
+                                style: TextStyle(fontSize: 11),
+                              ),
+                              Text(
+                                '• Ürünleri sonradan düzenleyebilirsiniz',
+                                style: TextStyle(fontSize: 11),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   actions: [
                     TextButton(
@@ -260,7 +413,22 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
                     ),
                     ElevatedButton(
                       onPressed: () async {
-                        if (nameController.text.trim().isNotEmpty) {
+                        if (nameController.text.trim().isNotEmpty &&
+                            priceController.text.trim().isNotEmpty &&
+                            descriptionController.text.trim().isNotEmpty) {
+                          final price = double.tryParse(
+                            priceController.text.trim(),
+                          );
+                          if (price == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Lütfen geçerli bir fiyat girin'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                            return;
+                          }
+
                           final productModel = ProductModel(
                             id:
                                 product?.id ??
@@ -269,6 +437,11 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
                             name: nameController.text.trim(),
                             category: selectedCategory,
                             description: descriptionController.text.trim(),
+                            price: price,
+                            imageUrl:
+                                imageUrlController.text.trim().isNotEmpty
+                                    ? imageUrlController.text.trim()
+                                    : null,
                             corporateId: _userModel?.uid ?? '',
                             corporateName:
                                 _userModel?.organizationName ??
@@ -297,26 +470,61 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
                               navigator.pop();
                               messenger.showSnackBar(
                                 SnackBar(
-                                  content: Text(
-                                    product == null
-                                        ? 'Ürün başarıyla eklendi!'
-                                        : 'Ürün başarıyla güncellendi!',
+                                  content: Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.check_circle,
+                                        color: Colors.white,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        product == null
+                                            ? 'Ürün başarıyla eklendi!'
+                                            : 'Ürün başarıyla güncellendi!',
+                                      ),
+                                    ],
                                   ),
                                   backgroundColor: Colors.green,
+                                  behavior: SnackBarBehavior.floating,
                                 ),
                               );
                             } else {
                               messenger.showSnackBar(
                                 const SnackBar(
-                                  content: Text('Bir hata oluştu!'),
+                                  content: Row(
+                                    children: [
+                                      Icon(Icons.error, color: Colors.white),
+                                      SizedBox(width: 8),
+                                      Text('Bir hata oluştu!'),
+                                    ],
+                                  ),
                                   backgroundColor: Colors.red,
+                                  behavior: SnackBarBehavior.floating,
                                 ),
                               );
                             }
                           }
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Lütfen gerekli alanları doldurun'),
+                              backgroundColor: Colors.orange,
+                            ),
+                          );
                         }
                       },
-                      child: Text(product == null ? 'Ekle' : 'Güncelle'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.save, size: 18),
+                          const SizedBox(width: 4),
+                          Text(product == null ? 'Ürünü Kaydet' : 'Güncelle'),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -372,7 +580,21 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
           ),
     );
   }
+
+  IconData _getCategoryIcon(String category) {
+    switch (category) {
+      case 'Gıda':
+        return Icons.restaurant;
+      case 'Kişisel Bakım':
+        return Icons.face;
+      case 'Temizlik':
+        return Icons.cleaning_services;
+      case 'Ev':
+        return Icons.home;
+      case 'Diğer':
+        return Icons.category;
+      default:
+        return Icons.inventory;
+    }
+  }
 }
-
-
-

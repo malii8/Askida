@@ -303,16 +303,9 @@ class _FeedScreenState extends State<FeedScreen> {
       onRefresh: _loadData,
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
-        itemCount: displayList.length + (_currentUser?.userType == UserType.corporate ? 1 : 0),
+        itemCount: displayList.length,
         itemBuilder: (context, index) {
-          // Kurumsal kullanıcılar için QR tarama kartı
-          if (_currentUser?.userType == UserType.corporate && index == 0) {
-            return _buildQRScannerCard();
-          }
-          
-          // Normal askı kartları
-          final askiIndex = _currentUser?.userType == UserType.corporate ? index - 1 : index;
-          final aski = displayList[askiIndex];
+          final aski = displayList[index];
           return _buildAskiCard(aski);
         },
       ),
@@ -586,150 +579,6 @@ class _FeedScreenState extends State<FeedScreen> {
     );
   }
 
-  Widget _buildQRScannerCard() {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Theme.of(context).colorScheme.secondary,
-              Theme.of(context).colorScheme.secondary.withValues(alpha: 0.8),
-            ],
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Row(
-                children: [
-                  Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: const Center(
-                      child: Icon(
-                        Icons.qr_code_scanner,
-                        color: Colors.white,
-                        size: 32,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'QR Kod Tarayıcı',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'Müşteri QR kodunu okutun',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              
-              const SizedBox(height: 20),
-              
-              // Açıklama
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.info_outline, color: Colors.white, size: 20),
-                        SizedBox(width: 8),
-                        Text(
-                          'Nasıl Çalışır?',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 12),
-                    Text(
-                      '1. Müşteri askıdan ürün almak istediğinde QR kodunu gösterir\n'
-                      '2. Bu butona tıklayarak QR tarayıcıyı açın\n'
-                      '3. Müşterinin QR kodunu okutun\n'
-                      '4. Ürünü teslim edin ve işlemi tamamlayın',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                        height: 1.4,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              
-              const SizedBox(height: 20),
-              
-              // QR Tarama Butonu
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.pushNamed(context, '/qrValidator');
-                  },
-                  icon: const Icon(Icons.qr_code_scanner, size: 24),
-                  label: const Text(
-                    'QR Kod Tarayıcıyı Aç',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Theme.of(context).colorScheme.secondary,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 2,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date);
@@ -858,52 +707,41 @@ class _FeedScreenState extends State<FeedScreen> {
             children: [
               Icon(Icons.shopping_cart, color: Colors.green.shade600),
               const SizedBox(width: 8),
-              const Text('QR Okut'),
+              const Text('Ürün Al'),
             ],
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Text(
+                'Bu ürünü almak istediğinizi onaylıyor musunuz?',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.green.shade50,
+                  color: Colors.blue.shade50,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.green.shade200),
+                  border: Border.all(color: Colors.blue.shade200),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Ürün: ${aski.productName}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Bağışçı: ${aski.donorUserName}',
-                      style: TextStyle(color: Colors.grey.shade600),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Kurum: ${aski.corporateName}',
-                      style: TextStyle(color: Colors.grey.shade600),
-                    ),
+                    Text('Ürün: ${aski.productName}'),
+                    Text('Firma: ${aski.corporateName}'),
+                    Text('Bağışçı: ${aski.donorUserName}'),
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               const Text(
-                'Bu ürün için QR kodunu görmek istediğinizden emin misiniz?',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'QR kodunu göstererek mağazada ürünü teslim alabilirsiniz. Kurumsal kullanıcı QR\'ı taratıp teslim ettikten sonra askı tamamlanır.',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
+                'Onayladığınızda QR kod gösterilecek. Bu QR kodu firmaya göstererek ürününüzü alabilirsiniz.',
+                style: TextStyle(fontSize: 14, color: Colors.grey),
               ),
             ],
           ),
@@ -912,17 +750,16 @@ class _FeedScreenState extends State<FeedScreen> {
               onPressed: () => Navigator.pop(context),
               child: const Text('İptal'),
             ),
-            ElevatedButton.icon(
+            ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
-                _takeProduct(aski);
+                _navigateToQRDisplay(aski);
               },
-              icon: const Icon(Icons.check),
-              label: const Text('QR Okut'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
                 foregroundColor: Colors.white,
               ),
+              child: const Text('QR Kodu Göster'),
             ),
           ],
         );
@@ -930,65 +767,33 @@ class _FeedScreenState extends State<FeedScreen> {
     );
   }
 
-  // Ürün alma işlemi
-  void _takeProduct(AskiModel aski) async {
-    try {
-      if (_currentUser == null) return;
+  // QR kod ekranına yönlendir
+  void _navigateToQRDisplay(AskiModel aski) {
+    Navigator.pushNamed(
+      context,
+      '/qrDisplay',
+      arguments: {
+        'askiId': aski.id,
+        'productName': aski.productName,
+        'corporateName': aski.corporateName,
+      },
+    );
 
-      // ASKIYI DÜŞÜRME! Sadece QR göster
-      // QR göster
-      if (mounted) {
-        Navigator.pushNamed(
-          context,
-          '/qrDisplay',
-          arguments: {
-            'askiId': aski.id,
-            'productName': aski.productName,
-            'corporateName': aski.corporateName,
-            'isPickup': true, // Teslim alma için
-          },
-        );
-      }
-
-      // Başarı mesajı
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.qr_code, color: Colors.white),
-                const SizedBox(width: 8),
-                Text('QR kodu gösteriliyor. Mağazada bu kodu okutun.'),
-              ],
-            ),
-            backgroundColor: Colors.blue,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.error, color: Colors.white),
-                const SizedBox(width: 8),
-                Text('Hata: $e'),
-              ],
-            ),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
-      }
-    }
+    // Bilgi mesajı
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Row(
+          children: [
+            Icon(Icons.qr_code, color: Colors.white),
+            SizedBox(width: 8),
+            Text('QR kodu mağazada gösterin'),
+          ],
+        ),
+        backgroundColor: Colors.blue,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
   }
 }
 

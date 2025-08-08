@@ -51,6 +51,7 @@ class AskiService {
       );
 
       await _firestore.collection('askis').doc(askiId).set(askiModel.toJson());
+      developer.log('Askı başarıyla oluşturuldu: $askiId', name: 'AskiService');
       return askiId;
     } catch (e) {
       developer.log('Askı oluşturma hatası: $e', name: 'AskiService');
@@ -98,15 +99,25 @@ class AskiService {
 
   // Kullanıcının askılarını getirme
   Stream<List<AskiModel>> getUserAskis(String userId) {
+    developer.log(
+      'getUserAskis çağrıldı, userId: $userId',
+      name: 'AskiService',
+    );
     return _firestore
         .collection('askis')
         .where('donorUserId', isEqualTo: userId)
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-          return snapshot.docs.map((doc) {
-            return AskiModel.fromJson(doc.data());
-          }).toList();
+          final askis =
+              snapshot.docs.map((doc) {
+                return AskiModel.fromJson(doc.data());
+              }).toList();
+          developer.log(
+            'getUserAskis sonuç: ${askis.length} askı bulundu',
+            name: 'AskiService',
+          );
+          return askis;
         });
   }
 
@@ -266,7 +277,27 @@ class AskiService {
       return {'total': 0, 'active': 0, 'taken': 0, 'cancelled': 0};
     }
   }
+
+  // Askıyı tamamla (ürün teslim edildi)
+  Future<void> completeAski(String askiId) async {
+    try {
+      final currentUser = _auth.currentUser;
+      if (currentUser == null) throw Exception('Kullanıcı girişi yapılmamış');
+
+      final userModel = await _userService.getCurrentUser();
+      if (userModel == null) throw Exception('Kullanıcı bilgisi bulunamadı');
+
+      await _firestore.collection('askis').doc(askiId).update({
+        'status': AskiStatus.taken.name,
+        'takenByUserId': userModel.uid,
+        'takenByUserName': userModel.fullName,
+        'takenAt': DateTime.now().millisecondsSinceEpoch,
+      });
+
+      developer.log('Askı tamamlandı: $askiId', name: 'AskiService');
+    } catch (e) {
+      developer.log('Askı tamamlama hatası: $e', name: 'AskiService');
+      rethrow;
+    }
+  }
 }
-
-
-

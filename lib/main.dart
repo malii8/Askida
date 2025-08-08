@@ -10,7 +10,6 @@ import 'screens/auth_screen.dart';
 
 import 'screens/settings_screen.dart';
 import 'screens/dashboard_screen.dart';
-import 'screens/qr_scanner_screen.dart';
 import 'screens/notifications_screen.dart';
 
 import 'screens/corporate_menu_screen.dart';
@@ -109,14 +108,9 @@ class MainApp extends StatelessWidget {
             builder: (context) => const SettingsScreen(),
           );
         }
-        if (settings.name == '/dashboard') {
+        if (settings.name == '/Gösterge Paneli') {
           return MaterialPageRoute(
             builder: (context) => const DashboardScreen(),
-          );
-        }
-        if (settings.name == '/qrScanner') {
-          return MaterialPageRoute(
-            builder: (context) => const QRScannerScreen(),
           );
         }
 
@@ -164,6 +158,9 @@ class MainApp extends StatelessWidget {
           return MaterialPageRoute(
             builder: (context) => const NotificationsScreen(),
           );
+        }
+        if (settings.name == '/profile') {
+          return MaterialPageRoute(builder: (context) => const ProfileScreen());
         }
         return null;
       },
@@ -409,7 +406,7 @@ class _MainAppScreenState extends State<MainAppScreen> {
           const BottomNavigationBarItem(
             icon: Icon(Icons.dashboard_outlined),
             activeIcon: Icon(Icons.dashboard),
-            label: 'Dashboard',
+            label: 'Gösterge Paneli',
           ),
           if (_userModel?.userType == UserType.corporate)
             const BottomNavigationBarItem(
@@ -443,7 +440,7 @@ class _MainAppScreenState extends State<MainAppScreen> {
           FloatingActionButton(
             heroTag: "qr_scanner",
             onPressed: () {
-              Navigator.pushNamed(context, '/qrScanner');
+              Navigator.pushNamed(context, '/qrValidator');
             },
             backgroundColor: Theme.of(context).colorScheme.secondary,
             foregroundColor: Colors.white,
@@ -453,32 +450,13 @@ class _MainAppScreenState extends State<MainAppScreen> {
           FloatingActionButton.extended(
             heroTag: "create_post",
             onPressed: () async {
-              final messenger = ScaffoldMessenger.of(context);
               final navigator = Navigator.of(context);
 
-              final result = await navigator.push(
+              await navigator.push(
                 MaterialPageRoute(
                   builder: (context) => const CreatePostScreen(),
                 ),
               );
-              if (result == true) {
-                messenger.showSnackBar(
-                  SnackBar(
-                    content: const Row(
-                      children: [
-                        Icon(Icons.check_circle, color: Colors.white),
-                        SizedBox(width: 8),
-                        Text('Askı başarıyla oluşturuldu!'),
-                      ],
-                    ),
-                    backgroundColor: Colors.green,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                );
-              }
             },
             icon: const Icon(Icons.add_circle_outline),
             label: const Text('Askı Oluştur'),
@@ -495,30 +473,11 @@ class _MainAppScreenState extends State<MainAppScreen> {
       return FloatingActionButton.extended(
         heroTag: "create_post",
         onPressed: () async {
-          final messenger = ScaffoldMessenger.of(context);
           final navigator = Navigator.of(context);
 
-          final result = await navigator.push(
+          await navigator.push(
             MaterialPageRoute(builder: (context) => const CreatePostScreen()),
           );
-          if (result == true) {
-            messenger.showSnackBar(
-              SnackBar(
-                content: const Row(
-                  children: [
-                    Icon(Icons.check_circle, color: Colors.white),
-                    SizedBox(width: 8),
-                    Text('Askı başarıyla oluşturuldu!'),
-                  ],
-                ),
-                backgroundColor: Colors.green,
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            );
-          }
         },
         icon: const Icon(Icons.add_circle_outline),
         label: const Text('Askı Oluştur'),

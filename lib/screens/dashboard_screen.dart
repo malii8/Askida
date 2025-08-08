@@ -3,6 +3,7 @@ import '../models/user_model.dart';
 import '../models/aski_model.dart';
 import '../services/user_service.dart';
 import '../services/aski_service.dart';
+import 'dart:developer' as developer;
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -18,44 +19,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
   UserModel? _currentUser;
   List<AskiModel> _userAskis = [];
   Map<String, int> _statistics = {};
-  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadDashboardData();
+    _loadCurrentUser();
   }
 
-  Future<void> _loadDashboardData() async {
+  Future<void> _loadCurrentUser() async {
     try {
-      // Kullanıcı bilgilerini yükle
-      final currentUser = await _userService.getCurrentUser();
-
-      if (currentUser != null) {
-        // Kullanıcının askılarını yükle
-        final userAskisStream = _askiService.getUserAskis(currentUser.uid);
-        userAskisStream.listen((askis) {
-          if (mounted) {
-            setState(() {
-              _userAskis = askis;
-              _statistics = _calculateStatistics(askis);
-              _isLoading = false;
-            });
-          }
+      final user = await _userService.getCurrentUser();
+      if (mounted) {
+        setState(() {
+          _currentUser = user;
         });
-
-        if (mounted) {
-          setState(() {
-            _currentUser = currentUser;
-          });
-        }
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _isLoading = false;
+          // Error handling
         });
       }
+    }
+  }
+
+  Future<void> _loadDashboardData() async {
+    // StreamBuilder otomatik olarak veriyi yükleyeceği için sadece kullanıcı bilgisini kontrol et
+    if (_currentUser == null) {
+      await _loadCurrentUser();
     }
   }
 
@@ -88,38 +79,86 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onPressed: () {
               Navigator.pushNamed(context, '/profile');
             },
+            style: IconButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              foregroundColor: Colors.white,
+            ),
           ),
         ],
       ),
       body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _buildDashboardContent(),
+          _currentUser == null
+              ? _buildUserLoader()
+              : StreamBuilder<List<AskiModel>>(
+                stream: _askiService.getUserAskis(_currentUser!.uid),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.error, size: 64, color: Colors.red),
+                          const SizedBox(height: 16),
+                          Text('Hata: ${snapshot.error}'),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: () => setState(() {}),
+                            child: const Text('Tekrar Dene'),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  final askis = snapshot.data ?? [];
+                  _userAskis = askis;
+                  _statistics = _calculateStatistics(askis);
+
+                  developer.log(
+                    'Dashboard StreamBuilder: ${askis.length} askı yüklendi',
+                    name: 'Dashboard',
+                  );
+
+                  return RefreshIndicator(
+                    onRefresh: _loadDashboardData,
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildWelcomeCard(),
+                          const SizedBox(height: 24),
+                          _buildStatisticsCards(),
+                          const SizedBox(height: 24),
+                          _buildRecentAskis(),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
     );
   }
 
-  Widget _buildDashboardContent() {
-    if (_currentUser == null) {
-      return const Center(child: Text('Kullanıcı bilgileri yüklenemedi'));
-    }
+  Widget _buildUserLoader() {
+    return FutureBuilder<UserModel?>(
+      future: _userService.getCurrentUser(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-    return RefreshIndicator(
-      onRefresh: _loadDashboardData,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildWelcomeCard(),
-            const SizedBox(height: 24),
-            _buildStatisticsCards(),
-            const SizedBox(height: 24),
-            _buildQuickActions(),
-            const SizedBox(height: 24),
-            _buildRecentAskis(),
-          ],
-        ),
-      ),
+        if (snapshot.hasError || snapshot.data == null) {
+          return const Center(child: Text('Kullanıcı bilgileri yüklenemedi'));
+        }
+
+        _currentUser = snapshot.data;
+        return const Center(child: CircularProgressIndicator());
+      },
     );
   }
 
@@ -323,157 +362,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildQuickActions() {
-    // Kullanıcı tipine göre farklı aksiyonlar
-    List<Map<String, dynamic>> actions = [];
-
-    if (_currentUser?.userType == UserType.corporate) {
-      // Kurumsal kullanıcılar için
-      actions = [
-        {
-          'title': 'QR Kod Doğrula',
-          'subtitle': 'Askıdan ürün teslim et',
-          'icon': Icons.qr_code_scanner,
-          'color': Colors.blue,
-          'route': '/qrValidator',
-        },
-        {
-          'title': 'Kurumsal Menü',
-          'subtitle': 'İşletme yönetimi',
-          'icon': Icons.business_center,
-          'color': Colors.green,
-          'route': '/corporateMenu',
-        },
-        {
-          'title': 'Askıları Gör',
-          'subtitle': 'Tüm askıları incele',
-          'icon': Icons.list_alt,
-          'color': Colors.orange,
-          'route': '/feed',
-        },
-        {
-          'title': 'Profil Ayarları',
-          'subtitle': 'Hesabını yönet',
-          'icon': Icons.settings,
-          'color': Colors.purple,
-          'route': '/settings',
-        },
-      ];
-    } else {
-      // Bireysel kullanıcılar için
-      actions = [
-        {
-          'title': 'Yeni Askı Oluştur',
-          'subtitle': 'Ürününü askıya as',
-          'icon': Icons.add_circle_outline,
-          'color': Colors.green,
-          'route': '/createPost',
-        },
-        {
-          'title': 'Askıları Gör',
-          'subtitle': 'Tüm askıları incele',
-          'icon': Icons.list_alt,
-          'color': Colors.orange,
-          'route': '/feed',
-        },
-        {
-          'title': 'Profil Ayarları',
-          'subtitle': 'Hesabını yönet',
-          'icon': Icons.settings,
-          'color': Colors.blue,
-          'route': '/settings',
-        },
-      ];
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Hızlı İşlemler',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 16),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            childAspectRatio: 1.3,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-          ),
-          itemCount: actions.length,
-          itemBuilder: (context, index) {
-            final action = actions[index];
-            return InkWell(
-              onTap: () {
-                Navigator.pushNamed(context, action['route'] as String);
-              },
-              borderRadius: BorderRadius.circular(16),
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withValues(alpha: 0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                  border: Border.all(
-                    color: (action['color'] as Color).withValues(alpha: 0.2),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: (action['color'] as Color).withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(25),
-                      ),
-                      child: Icon(
-                        action['icon'] as IconData,
-                        color: action['color'] as Color,
-                        size: 28,
-                      ),
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          action['title'] as String,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          action['subtitle'] as String,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        ),
-      ],
-    );
-  }
-
   Widget _buildRecentAskis() {
     final recentAskis = _userAskis.take(3).toList();
 
@@ -570,7 +458,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       width: 50,
                       height: 50,
                       decoration: BoxDecoration(
-                        color: _getStatusColor(aski.status).withValues(alpha: 0.1),
+                        color: _getStatusColor(
+                          aski.status,
+                        ).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(25),
                       ),
                       child: Icon(
@@ -650,11 +540,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final difference = now.difference(date);
 
     if (difference.inDays > 0) {
-      return '${difference.inDays}g';
+      return '${difference.inDays} gün önce';
     } else if (difference.inHours > 0) {
-      return '${difference.inHours}s';
+      return '${difference.inHours} saat önce';
     } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes}d';
+      return '${difference.inMinutes} dk önce';
     } else {
       return 'Şimdi';
     }

@@ -4,7 +4,6 @@ import '../models/user_model.dart';
 import '../services/aski_service.dart';
 import '../services/product_service.dart';
 import '../services/user_service.dart';
-import 'qr_display_screen.dart';
 
 class CreatePostScreen extends StatefulWidget {
   const CreatePostScreen({super.key});
@@ -139,18 +138,26 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       setState(() => _isLoading = false);
 
       if (askiId != null && mounted) {
-        // QR ekranına yönlendir
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder:
-                (context) => QRDisplayScreen(
-                  askiId: askiId,
-                  productName: _selectedProduct!.name,
-                  corporateName: _selectedCorporate!.fullName,
-                ),
+        // Başarı mesajı göster ve ana sayfaya dön
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 8),
+                Text('Askı başarıyla oluşturuldu!'),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
         );
+
+        // Ana sayfaya dön
+        Navigator.pop(context, true);
       } else {
         _showError('Askı oluşturulurken hata oluştu');
       }
@@ -346,7 +353,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                                 color:
                                     isSelected
                                         ? Theme.of(context).colorScheme.primary
-                                            .withValues(alpha:  0.1)
+                                            .withValues(alpha: 0.1)
                                         : Colors.white,
                                 border: Border.all(
                                   color:
@@ -360,7 +367,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                                 borderRadius: BorderRadius.circular(12),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.grey.withValues(alpha:  0.1),
+                                    color: Colors.grey.withValues(alpha: 0.1),
                                     blurRadius: 5,
                                     offset: const Offset(0, 2),
                                   ),
@@ -504,7 +511,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                               color:
                                   isSelected
                                       ? Theme.of(context).colorScheme.primary
-                                          .withValues(alpha:  0.1)
+                                          .withValues(alpha: 0.1)
                                       : Colors.white,
                               border: Border.all(
                                 color:
@@ -516,7 +523,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.grey.withValues(alpha:  0.1),
+                                  color: Colors.grey.withValues(alpha: 0.1),
                                   blurRadius: 5,
                                   offset: const Offset(0, 2),
                                 ),
@@ -624,7 +631,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                                 color:
                                     isSelected
                                         ? Theme.of(context).colorScheme.primary
-                                            .withValues(alpha:  0.1)
+                                            .withValues(alpha: 0.1)
                                         : Colors.white,
                                 border: Border.all(
                                   color:
@@ -638,7 +645,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                                 borderRadius: BorderRadius.circular(12),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.grey.withValues(alpha:  0.1),
+                                    color: Colors.grey.withValues(alpha: 0.1),
                                     blurRadius: 5,
                                     offset: const Offset(0, 2),
                                   ),
@@ -810,7 +817,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withValues(alpha:  0.2),
+            color: Colors.grey.withValues(alpha: 0.2),
             blurRadius: 10,
             offset: const Offset(0, -5),
           ),
@@ -924,6 +931,3 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     return category ?? 'Diğer';
   }
 }
-
-
-

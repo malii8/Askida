@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import '../services/user_service.dart';
 import '../services/aski_service.dart';
 import '../models/user_model.dart';
+import '../models/aski_model.dart';
 
 class QRValidatorScreen extends StatefulWidget {
   const QRValidatorScreen({super.key});
@@ -14,13 +16,21 @@ class QRValidatorScreen extends StatefulWidget {
 class _QRValidatorScreenState extends State<QRValidatorScreen> {
   final UserService _userService = UserService();
   final AskiService _askiService = AskiService();
-  bool _isScanning = true;
+  MobileScannerController cameraController = MobileScannerController();
   UserModel? _currentUser;
+  bool _isProcessing = false;
+  String? _validationMessage;
 
   @override
   void initState() {
     super.initState();
     _loadCurrentUser();
+  }
+
+  @override
+  void dispose() {
+    cameraController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadCurrentUser() async {
@@ -29,6 +39,135 @@ class _QRValidatorScreenState extends State<QRValidatorScreen> {
       setState(() {
         _currentUser = user;
       });
+    }
+  }
+
+  Future<void> _onQRCodeDetected(BarcodeCapture barcodeCapture) async {
+    if (_isProcessing) return;
+
+    final String? qrData = barcodeCapture.barcodes.first.rawValue;
+    if (qrData == null || qrData.isEmpty) return;
+
+    setState(() {
+      _isProcessing = true;
+      _validationMessage = null;
+    });
+
+    try {
+      // QR kodunu parse et
+      final Map<String, dynamic> qrContent = jsonDecode(qrData);
+      final String askiId = qrContent['askiId'];
+      final String productName = qrContent['productName'];
+      final String corporateName = qrContent['corporateName'];
+
+      // Askıyı veritabanından kontrol et
+      final aski = await _askiService.getAski(askiId);
+
+      if (aski == null) {
+        setState(() {
+          _validationMessage = 'Geçersiz QR kod - Askı bulunamadı';
+          _isProcessing = false;
+        });
+        return;
+      }
+
+      if (aski.status == AskiStatus.taken) {
+        setState(() {
+          _validationMessage = 'Bu askı zaten tamamlanmış';
+          _isProcessing = false;
+        });
+        return;
+      }
+
+      // Kurumsal kullanıcının bu ürünü verme yetkisi var mı kontrol et
+      if (_currentUser?.companyName != corporateName) {
+        setState(() {
+          _validationMessage = 'Bu ürün sizin firmanıza ait değil';
+          _isProcessing = false;
+        });
+        return;
+      }
+
+      // Başarılı doğrulama
+      await _showValidationSuccessDialog(aski, productName, corporateName);
+    } catch (e) {
+      setState(() {
+        _validationMessage = 'QR kod okunamadı veya geçersiz format';
+        _isProcessing = false;
+      });
+    }
+  }
+
+  Future<void> _showValidationSuccessDialog(
+    AskiModel aski,
+    String productName,
+    String corporateName,
+  ) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('QR Kod Doğrulandı'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Ürün: $productName'),
+                Text('Firma: $corporateName'),
+                Text('Askı Sahibi: ${aski.donorUserName}'),
+                const SizedBox(height: 16),
+                const Text(
+                  'Ürünü teslim etmek istediğinizi onaylıyor musunuz?',
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('İptal'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Ürünü Teslim Et'),
+              ),
+            ],
+          ),
+    );
+
+    if (result == true) {
+      await _completeDelivery(aski);
+    } else {
+      setState(() {
+        _isProcessing = false;
+      });
+    }
+  }
+
+  Future<void> _completeDelivery(AskiModel aski) async {
+    try {
+      // Askıyı tamamla
+      await _askiService.completeAski(aski.id);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ürün başarıyla teslim edildi!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // Ana sayfaya dön
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Hata: $e'), backgroundColor: Colors.red),
+        );
+        setState(() {
+          _isProcessing = false;
+        });
+      }
     }
   }
 
@@ -68,11 +207,45 @@ class _QRValidatorScreenState extends State<QRValidatorScreen> {
                       ],
                     ),
                   ),
+                  if (_validationMessage != null)
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      margin: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.red.shade200),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.error, color: Colors.red),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              _validationMessage!,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                color: Colors.red,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   Expanded(
                     child:
-                        _isScanning
-                            ? _buildScannerView()
-                            : const Center(child: Text('QR kod taranıyor...')),
+                        _isProcessing
+                            ? const Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  CircularProgressIndicator(),
+                                  SizedBox(height: 16),
+                                  Text('QR kod işleniyor...'),
+                                ],
+                              ),
+                            )
+                            : _buildScannerView(),
                   ),
                 ],
               ),
@@ -82,312 +255,13 @@ class _QRValidatorScreenState extends State<QRValidatorScreen> {
   Widget _buildScannerView() {
     return Container(
       margin: const EdgeInsets.all(16),
-      child: Stack(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300, width: 2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.qr_code_scanner, size: 80, color: Colors.grey),
-                  SizedBox(height: 16),
-                  Text(
-                    'QR Kod Tarayıcısı Buraya Gelecek',
-                    style: TextStyle(fontSize: 16, color: Colors.grey),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    'QR kodunu kamera ile okutun',
-                    style: TextStyle(fontSize: 14, color: Colors.grey),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // Test button
-          Positioned(
-            bottom: 16,
-            left: 16,
-            right: 16,
-            child: ElevatedButton(
-              onPressed: _simulateQRScan,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-              child: const Text('Test QR Kodu Tara'),
-            ),
-          ),
-        ],
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: MobileScanner(
+          controller: cameraController,
+          onDetect: _onQRCodeDetected,
+        ),
       ),
     );
-  }
-
-  void _simulateQRScan() {
-    // Test için örnek QR data - Gerçek QR kodundan gelecek
-    final testQRData = {
-      'type': 'askida_product',
-      'askiId': 'test_aski_123',
-      'productId': 'test_product_456',
-      'productName': 'Test Ürün',
-      'corporateId': 'test_corporate_789',
-      'corporateName': 'Test Kurum',
-      'donorUserId': 'test_donor_user',
-      'donorName': 'Test Kullanıcı',
-      'askiDate': DateTime.now().toIso8601String(),
-    };
-
-    _processQRCode(jsonEncode(testQRData));
-  }
-
-  void _processQRCode(String qrCode) {
-    try {
-      final qrData = jsonDecode(qrCode) as Map<String, dynamic>;
-
-      // QR kod formatını kontrol et
-      if (qrData['type'] != 'askida_product') {
-        _showErrorDialog('Geçersiz QR kod formatı');
-        return;
-      }
-
-      _showQRResult(qrData);
-    } catch (e) {
-      _showErrorDialog('QR kod okunamadı: $e');
-    }
-  }
-
-  void _showErrorDialog(String message) {
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Row(
-              children: [
-                Icon(Icons.error, color: Colors.red),
-                SizedBox(width: 8),
-                Text('Hata'),
-              ],
-            ),
-            content: Text(message),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _restartScanning();
-                },
-                child: const Text('Tamam'),
-              ),
-            ],
-          ),
-    );
-  }
-
-  void _showQRResult(Map<String, dynamic> qrData) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder:
-          (context) => AlertDialog(
-            title: const Row(
-              children: [
-                Icon(Icons.qr_code, color: Colors.blue),
-                SizedBox(width: 8),
-                Text('QR Kod Bilgileri'),
-              ],
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildInfoRow('Ürün', qrData['productName'] ?? 'Bilinmiyor'),
-                _buildInfoRow('Kurum', qrData['corporateName'] ?? 'Bilinmiyor'),
-                _buildInfoRow(
-                  'Bağışlayan',
-                  qrData['donorName'] ?? 'Bilinmiyor',
-                ),
-                _buildInfoRow('Askı Tarihi', _formatDate(qrData['askiDate'])),
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.green.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.green.shade200),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.check_circle, color: Colors.green),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Ürün teslim edilmeye hazır!',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _restartScanning();
-                },
-                child: const Text('İptal'),
-              ),
-              ElevatedButton(
-                onPressed: () => _confirmDelivery(qrData),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                ),
-                child: const Text('Ürünü Teslim Et'),
-              ),
-            ],
-          ),
-    );
-  }
-
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 80,
-            child: Text(
-              '$label:',
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-          Expanded(child: Text(value)),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _confirmDelivery(Map<String, dynamic> qrData) async {
-    Navigator.pop(context); // Dialog'u kapat
-
-    // Loading dialog göster
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder:
-          (context) => const AlertDialog(
-            content: Row(
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(width: 16),
-                Text('Ürün teslim ediliyor...'),
-              ],
-            ),
-          ),
-    );
-
-    try {
-      // Askıyı teslim et
-      final success = await _askiService.takeAski(
-        askiId: qrData['askiId'],
-        takenByUserId: 'delivered_to_customer', // Özel işaret
-        takenByUserName: 'Kurumsal Teslim',
-      );
-
-      if (!mounted) return;
-      Navigator.pop(context); // Loading dialog'u kapat
-
-      if (success) {
-        _showSuccessDialog(qrData['productName'] ?? 'Ürün');
-      } else {
-        _showErrorDialog('Ürün teslim edilirken hata oluştu');
-      }
-    } catch (e) {
-      if (!mounted) return;
-      Navigator.pop(context); // Loading dialog'u kapat
-      _showErrorDialog('Teslim hatası: $e');
-    }
-  }
-
-  void _showSuccessDialog(String productName) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder:
-          (context) => AlertDialog(
-            title: const Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.green),
-                SizedBox(width: 8),
-                Text('Teslim Başarılı'),
-              ],
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('$productName başarıyla teslim edildi!'),
-                const SizedBox(height: 16),
-                const Text(
-                  'Ürün askıdan alınarak müşteriye teslim edilmiştir.',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-              ],
-            ),
-            actions: [
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _restartScanning();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                ),
-                child: const Text('Tamam'),
-              ),
-            ],
-          ),
-    );
-  }
-
-  void _restartScanning() {
-    setState(() {
-      _isScanning = true;
-    });
-  }
-
-  String _formatDate(String? dateString) {
-    if (dateString == null) return 'Bilinmiyor';
-
-    try {
-      final date = DateTime.parse(dateString);
-      final now = DateTime.now();
-      final difference = now.difference(date);
-
-      if (difference.inDays > 0) {
-        return '${difference.inDays} gün önce';
-      } else if (difference.inHours > 0) {
-        return '${difference.inHours} saat önce';
-      } else if (difference.inMinutes > 0) {
-        return '${difference.inMinutes} dakika önce';
-      } else {
-        return 'Az önce';
-      }
-    } catch (e) {
-      return 'Bilinmiyor';
-    }
   }
 }
-
-
-
