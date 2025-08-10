@@ -776,6 +776,7 @@ class _FeedScreenState extends State<FeedScreen> {
         'askiId': aski.id,
         'productName': aski.productName,
         'corporateName': aski.corporateName,
+        'corporateId': aski.corporateId, // corporateId eklendi
       },
     );
 

@@ -5,6 +5,7 @@ import '../services/user_service.dart';
 import '../services/aski_service.dart';
 import '../models/user_model.dart';
 import '../models/aski_model.dart';
+import 'dart:developer' as developer;
 
 class QRValidatorScreen extends StatefulWidget {
   const QRValidatorScreen({super.key});
@@ -45,20 +46,39 @@ class _QRValidatorScreenState extends State<QRValidatorScreen> {
   Future<void> _onQRCodeDetected(BarcodeCapture barcodeCapture) async {
     if (_isProcessing) return;
 
+    if (_currentUser == null) {
+      setState(() {
+        _validationMessage =
+            'Kullanıcı bilgileri yükleniyor, lütfen bekleyin veya tekrar deneyin.';
+        _isProcessing = false;
+      });
+      return;
+    }
+
     final String? qrData = barcodeCapture.barcodes.first.rawValue;
-    if (qrData == null || qrData.isEmpty) return;
+    if (qrData == null || qrData.isEmpty) {
+      setState(() {
+        _validationMessage = 'QR kodu okunamadı.';
+        _isProcessing = false;
+      });
+      return;
+    }
 
     setState(() {
       _isProcessing = true;
       _validationMessage = null;
     });
 
+    developer.log('Raw QR Data: $qrData', name: 'QRValidatorScreen');
+
     try {
       // QR kodunu parse et
       final Map<String, dynamic> qrContent = jsonDecode(qrData);
+      developer.log('Parsed QR Content: $qrContent', name: 'QRValidatorScreen');
+
       final String askiId = qrContent['askiId'];
       final String productName = qrContent['productName'];
-      final String corporateName = qrContent['corporateName'];
+      final String? corporateId = qrContent['corporateId']; // Read corporateId
 
       // Askıyı veritabanından kontrol et
       final aski = await _askiService.getAski(askiId);
@@ -80,7 +100,7 @@ class _QRValidatorScreenState extends State<QRValidatorScreen> {
       }
 
       // Kurumsal kullanıcının bu ürünü verme yetkisi var mı kontrol et
-      if (_currentUser?.companyName != corporateName) {
+      if (_currentUser?.uid != corporateId) {
         setState(() {
           _validationMessage = 'Bu ürün sizin firmanıza ait değil';
           _isProcessing = false;
@@ -89,8 +109,9 @@ class _QRValidatorScreenState extends State<QRValidatorScreen> {
       }
 
       // Başarılı doğrulama
-      await _showValidationSuccessDialog(aski, productName, corporateName);
+      await _showValidationSuccessDialog(aski, productName, aski.corporateName);
     } catch (e) {
+      developer.log('QR code processing error: $e', name: 'QRValidatorScreen');
       setState(() {
         _validationMessage = 'QR kod okunamadı veya geçersiz format';
         _isProcessing = false;
@@ -260,6 +281,28 @@ class _QRValidatorScreenState extends State<QRValidatorScreen> {
         child: MobileScanner(
           controller: cameraController,
           onDetect: _onQRCodeDetected,
+          errorBuilder: (context, error) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error, size: 64, color: Colors.red),
+                  SizedBox(height: 16),
+                  Text(
+                    'Kamera başlatılamadı: ${error.toString()}',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.red, fontSize: 16),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Lütfen uygulama izinlerini kontrol edin veya cihazınızı yeniden başlatın.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 14),
+                  ),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );

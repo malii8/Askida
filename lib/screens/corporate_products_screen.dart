@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:developer' as developer;
 import '../services/user_service.dart';
 import '../services/product_service.dart';
 import '../models/user_model.dart';
@@ -413,6 +414,10 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
                     ),
                     ElevatedButton(
                       onPressed: () async {
+                        final navigator = Navigator.of(context);
+                        final messenger = ScaffoldMessenger.of(context);
+                        bool success = false;
+
                         if (nameController.text.trim().isNotEmpty &&
                             priceController.text.trim().isNotEmpty &&
                             descriptionController.text.trim().isNotEmpty) {
@@ -420,7 +425,7 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
                             priceController.text.trim(),
                           );
                           if (price == null) {
-                            ScaffoldMessenger.of(context).showSnackBar(
+                            messenger.showSnackBar(
                               const SnackBar(
                                 content: Text('Lütfen geçerli bir fiyat girin'),
                                 backgroundColor: Colors.red,
@@ -450,11 +455,12 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
                             createdAt: product?.createdAt ?? DateTime.now(),
                           );
 
-                          // BuildContext'i async işlemden önce al
-                          final navigator = Navigator.of(context);
-                          final messenger = ScaffoldMessenger.of(context);
+                          // Log the corporateId before creating the product
+                          developer.log(
+                            'ProductModel Corporate ID: ${productModel.corporateId}',
+                            name: 'CorporateProductsScreen',
+                          );
 
-                          bool success;
                           if (product == null) {
                             success = await _productService.addProduct(
                               productModel,
@@ -505,7 +511,7 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
                             }
                           }
                         } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          messenger.showSnackBar(
                             const SnackBar(
                               content: Text('Lütfen gerekli alanları doldurun'),
                               backgroundColor: Colors.orange,

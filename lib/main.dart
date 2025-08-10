@@ -147,6 +147,8 @@ class MainApp extends StatelessWidget {
                     askiId: args['askiId'] as String,
                     productName: args['productName'] as String,
                     corporateName: args['corporateName'] as String,
+                    corporateId:
+                        args['corporateId'] as String, // corporateId eklendi
                   ),
             );
           }

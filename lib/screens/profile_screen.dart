@@ -25,11 +25,16 @@ class _ProfileScreenState extends State<ProfileScreen>
   List<AskiModel> _takenAskis = [];
 
   late TabController _tabController;
+  final GlobalKey _takenAskisListKey =
+      GlobalKey(); // QR ile alınan ürünler listesi için key
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(
+      length: 2,
+      vsync: this,
+    ); // Askılarım ve Geçmiş tabları için
     _loadUserProfile();
   }
 
@@ -87,7 +92,9 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 
   void _updateTabController() {
-    final tabLength = _currentUser?.userType == UserType.individual ? 3 : 1;
+    // Bireysel kullanıcılar için sadece Askılarım ve Geçmiş tabları (2 adet)
+    // Kurumsal kullanıcılar için sadece Askılarım tabı (1 adet)
+    final tabLength = _currentUser?.userType == UserType.individual ? 2 : 1;
     _tabController.dispose();
     _tabController = TabController(length: tabLength, vsync: this);
   }
@@ -99,6 +106,32 @@ class _ProfileScreenState extends State<ProfileScreen>
       'taken': askis.where((a) => a.status == AskiStatus.taken).length,
       'expired': askis.where((a) => a.status == AskiStatus.expired).length,
     };
+  }
+
+  void _onStatCardTap(String cardTitle) {
+    switch (cardTitle) {
+      case 'Aldığım Askılar':
+        // Aldığım Askılar listesine kaydır
+        Scrollable.ensureVisible(
+          _takenAskisListKey.currentContext!,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+        );
+        break;
+      case 'Toplam Askım':
+      case 'Aktif Askılar':
+        // Askılarım sekmesine git
+        _tabController.animateTo(0);
+        break;
+      case 'Alınan Askılar':
+        // Geçmiş sekmesine git (bireysel kullanıcılar için 2. tab)
+        if (_currentUser?.userType == UserType.individual) {
+          _tabController.animateTo(1);
+        }
+        break;
+      default:
+        break;
+    }
   }
 
   @override
@@ -123,6 +156,10 @@ class _ProfileScreenState extends State<ProfileScreen>
               children: [
                 _buildProfileHeader(),
                 _buildStatsCards(),
+                // QR ile Aldığım Ürünler listesi sadece bireysel kullanıcılar için
+                if (_currentUser?.userType == UserType.individual) ...[
+                  _buildTakenAskisList(),
+                ],
                 _buildTabSection(),
               ],
             ),
@@ -287,7 +324,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       },
     ];
 
-    // Kurumsal kullanıcılar için "Aldığım Askılar" kartını ekleme
+    // Bireysel kullanıcılar için "Aldığım Askılar" kartını ekleme
     if (_currentUser?.userType == UserType.individual) {
       stats.add({
         'title': 'Aldığım Askılar',
@@ -311,50 +348,54 @@ class _ProfileScreenState extends State<ProfileScreen>
         itemCount: stats.length,
         itemBuilder: (context, index) {
           final stat = stats[index];
-          return Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withValues(alpha: 0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Icon(
-                      stat['icon'] as IconData,
-                      color: stat['color'] as Color,
-                      size: 24,
-                    ),
-                    Text(
-                      '${stat['value']}',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: stat['color'] as Color,
-                      ),
-                    ),
-                  ],
-                ),
-                Text(
-                  stat['title'] as String,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade700,
+          return InkWell(
+            onTap: () => _onStatCardTap(stat['title'] as String),
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withValues(alpha: 0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
                   ),
-                ),
-              ],
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Icon(
+                        stat['icon'] as IconData,
+                        color: stat['color'] as Color,
+                        size: 24,
+                      ),
+                      Text(
+                        '${stat['value']}',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: stat['color'] as Color,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    stat['title'] as String,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         },
@@ -362,12 +403,120 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
+  // Aldığım Askılar (QR ile alınan ürünler) kutusu
+  Widget _buildTakenAskisList() {
+    if (_currentUser?.userType != UserType.individual) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      key: _takenAskisListKey, // GlobalKey ataması
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withValues(alpha: 0.08), // Deprecated düzeltildi
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: const [
+              Icon(Icons.qr_code_scanner, color: Colors.red, size: 20),
+              SizedBox(width: 8),
+              Text(
+                'QR ile Aldığım Ürünler',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Bu listede QR kod okutarak aldığınız ürünler görünür.',
+            style: TextStyle(fontSize: 13, color: Colors.grey),
+          ),
+          const SizedBox(height: 12),
+          if (_takenAskis.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 32),
+              alignment: Alignment.center,
+              child: Column(
+                children: const [
+                  Icon(
+                    Icons.shopping_bag_outlined,
+                    size: 48,
+                    color: Colors.grey,
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Henüz QR ile ürün almadınız.',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ],
+              ),
+            )
+          else
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _takenAskis.length,
+              separatorBuilder: (_, __) => const Divider(height: 16),
+              itemBuilder: (context, index) {
+                final aski = _takenAskis[index];
+                return Row(
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: Colors.red.shade100,
+                      child: Icon(
+                        Icons.shopping_bag,
+                        color: Colors.red.shade700,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            aski.productName,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            aski.corporateName,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      aski.takenAt != null ? _formatDate(aski.takenAt!) : '-',
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
+                );
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildTabSection() {
     final tabs = <Widget>[const Tab(text: 'Askılarım')];
-
-    // Bireysel kullanıcılar için "Aldıklarım" ve "Geçmiş" tabları
+    // Bireysel kullanıcılar için sadece "Geçmiş" tabı
     if (_currentUser?.userType == UserType.individual) {
-      tabs.add(const Tab(text: 'Aldıklarım'));
       tabs.add(const Tab(text: 'Geçmiş'));
     }
 
@@ -401,7 +550,6 @@ class _ProfileScreenState extends State<ProfileScreen>
               children: [
                 _buildUserAskisTab(),
                 if (_currentUser?.userType == UserType.individual) ...[
-                  _buildTakenAskisTab(),
                   _buildHistoryTab(),
                 ],
               ],
@@ -429,27 +577,6 @@ class _ProfileScreenState extends State<ProfileScreen>
       itemBuilder: (context, index) {
         final aski = _userAskis[index];
         return _buildAskiCard(aski);
-      },
-    );
-  }
-
-  Widget _buildTakenAskisTab() {
-    if (_takenAskis.isEmpty) {
-      return _buildEmptyState(
-        icon: Icons.shopping_bag_outlined,
-        title: 'Henüz askı almadın',
-        subtitle: 'QR kod tarayarak askılardan ürün alabilirsin!',
-        buttonText: 'QR Kod Tara',
-        onPressed: () => Navigator.pushNamed(context, '/qrScanner'),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: _takenAskis.length,
-      itemBuilder: (context, index) {
-        final aski = _takenAskis[index];
-        return _buildAskiCard(aski, isReceived: true);
       },
     );
   }

@@ -3,15 +3,18 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'dart:convert';
 
 class QRDisplayScreen extends StatelessWidget {
+  // StatefulWidget -> StatelessWidget
   final String askiId;
   final String productName;
   final String corporateName;
+  final String corporateId; // corporateId eklendi
 
   const QRDisplayScreen({
     super.key,
     required this.askiId,
     required this.productName,
     required this.corporateName,
+    required this.corporateId, // corporateId eklendi
   });
 
   @override
@@ -22,6 +25,7 @@ class QRDisplayScreen extends StatelessWidget {
       'askiId': askiId,
       'productName': productName,
       'corporateName': corporateName,
+      'corporateId': corporateId, // corporateId doğrudan kullanılıyor
       'timestamp': DateTime.now().millisecondsSinceEpoch,
     };
 
@@ -77,7 +81,7 @@ class QRDisplayScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.grey.withValues(alpha: 0.3),
+                        color: Colors.grey.withOpacity(0.3),
                         spreadRadius: 2,
                         blurRadius: 8,
                         offset: const Offset(0, 4),
@@ -134,7 +138,7 @@ class QRDisplayScreen extends StatelessWidget {
                         color: Colors.grey,
                       ),
                       const SizedBox(width: 8),
-                      Text('Ürün: $productName'),
+                      Text('Ürün: ${productName}'),
                     ],
                   ),
                   const SizedBox(height: 4),
@@ -142,7 +146,7 @@ class QRDisplayScreen extends StatelessWidget {
                     children: [
                       const Icon(Icons.business, size: 20, color: Colors.grey),
                       const SizedBox(width: 8),
-                      Text('Firma: $corporateName'),
+                      Text('Firma: ${corporateName}'),
                     ],
                   ),
                 ],
