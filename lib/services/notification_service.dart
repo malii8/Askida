@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/notification_model.dart';
@@ -89,7 +90,15 @@ class NotificationService {
       await _notificationsCollection.doc(notificationId).update({
         'isRead': true,
       });
+      developer.log(
+        'Bildirim okundu olarak işaretlendi: $notificationId',
+        name: 'NotificationService',
+      );
     } catch (e) {
+      developer.log(
+        'Bildirim güncellenirken hata oluştu: $e',
+        name: 'NotificationService',
+      );
       throw Exception('Bildirim güncellenirken hata oluştu: $e');
     }
   }
@@ -165,32 +174,42 @@ class NotificationService {
   Stream<List<NotificationModel>> getUserNotificationsStream({
     String? userId,
     int limit = 50,
+    bool? includeRead = false, // Yeni parametre eklendi
   }) {
     final targetUserId = userId ?? _auth.currentUser?.uid;
     if (targetUserId == null) {
       return Stream.value([]);
     }
 
-    return _notificationsCollection
-        .where('userId', isEqualTo: targetUserId)
-        .limit(limit)
-        .snapshots()
-        .map((snapshot) {
-          List<NotificationModel> notifications =
-              snapshot.docs
-                  .map(
-                    (doc) => NotificationModel.fromMap(
-                      doc.id,
-                      doc.data() as Map<String, dynamic>,
-                    ),
-                  )
-                  .toList();
+    Query query = _notificationsCollection.where(
+      'userId',
+      isEqualTo: targetUserId,
+    );
 
-          // Client-side'da sıralama yap
-          notifications.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    if (includeRead == false) {
+      query = query.where('isRead', isEqualTo: false);
+    }
 
-          return notifications;
-        });
+    return query.limit(limit).snapshots().map((snapshot) {
+      developer.log(
+        'Notification stream received ${snapshot.docs.length} docs for user $targetUserId',
+        name: 'NotificationService',
+      );
+      List<NotificationModel> notifications =
+          snapshot.docs
+              .map(
+                (doc) => NotificationModel.fromMap(
+                  doc.id,
+                  doc.data() as Map<String, dynamic>,
+                ),
+              )
+              .toList();
+
+      // Client-side'da sıralama yap
+      notifications.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+      return notifications;
+    });
   }
 
   // Post ile ilgili bildirimler oluşturma
@@ -312,6 +331,3 @@ class NotificationService {
     }
   }
 }
-
-
-

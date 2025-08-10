@@ -163,6 +163,18 @@ class AskiService {
     }
   }
 
+  // Belirli bir askıyı stream olarak dinleme
+  Stream<AskiModel?> getAskiStream(String askiId) {
+    return _firestore.collection('askis').doc(askiId).snapshots().map((
+      snapshot,
+    ) {
+      if (snapshot.exists && snapshot.data() != null) {
+        return AskiModel.fromJson(snapshot.data()!);
+      }
+      return null;
+    });
+  }
+
   // QR kodundan askı bilgisi alma
   Future<AskiModel?> getAskiFromQR(String qrData) async {
     try {

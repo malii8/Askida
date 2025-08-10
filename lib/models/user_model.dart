@@ -11,6 +11,7 @@ class UserModel {
   final bool isApproved; // Kurumsal kullanıcılar için onay durumu
   final String? companyName; // Şirket adı (kurumsal kullanıcılar için)
   final String? taxNumber; // Vergi numarası (kurumsal kullanıcılar için)
+  final String? corporateId; // Kurumsal kullanıcılar için şirket ID'si
 
   // Getter'lar için alias'lar
   String get name => fullName;
@@ -28,6 +29,7 @@ class UserModel {
     this.isApproved = false,
     this.companyName,
     this.taxNumber,
+    this.corporateId,
   }) : updatedAt = updatedAt ?? createdAt;
 
   // Firestore'dan veri okuma
@@ -51,6 +53,7 @@ class UserModel {
       isApproved: map['isApproved'] ?? false,
       companyName: map['companyName'],
       taxNumber: map['taxNumber'],
+      corporateId: map['corporateId'], // corporateId eklendi
     );
   }
 
@@ -72,6 +75,24 @@ class UserModel {
     };
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'uid': uid,
+      'email': email,
+      'fullName': fullName,
+      'userType': userType.toString().split('.').last,
+      'organizationName': organizationName,
+      'phone': phone,
+      'createdAt': createdAt.millisecondsSinceEpoch,
+      'updatedAt': updatedAt.millisecondsSinceEpoch,
+      'isVerified': isVerified,
+      'isApproved': isApproved,
+      'companyName': companyName,
+      'taxNumber': taxNumber,
+      'corporateId': corporateId, // corporateId eklendi
+    };
+  }
+
   // Kopya oluşturma
   UserModel copyWith({
     String? uid,
@@ -86,6 +107,7 @@ class UserModel {
     bool? isApproved,
     String? companyName,
     String? taxNumber,
+    String? corporateId,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -100,6 +122,7 @@ class UserModel {
       isApproved: isApproved ?? this.isApproved,
       companyName: companyName ?? this.companyName,
       taxNumber: taxNumber ?? this.taxNumber,
+      corporateId: corporateId ?? this.corporateId,
     );
   }
 }
@@ -128,6 +151,3 @@ extension UserTypeExtension on UserType {
     }
   }
 }
-
-
-

@@ -60,14 +60,22 @@ class AskiModel {
       donorUserId: json['donorUserId'] ?? '',
       donorUserName: json['donorUserName'] ?? '',
       message: json['message'],
-      createdAt: DateTime.parse(json['createdAt']),
+      createdAt:
+          json['createdAt'] is int
+              ? DateTime.fromMillisecondsSinceEpoch(json['createdAt'])
+              : DateTime.parse(json['createdAt']),
       status: AskiStatus.values.firstWhere(
         (e) => e.name == json['status'],
         orElse: () => AskiStatus.active,
       ),
       takenByUserId: json['takenByUserId'],
       takenByUserName: json['takenByUserName'],
-      takenAt: json['takenAt'] != null ? DateTime.parse(json['takenAt']) : null,
+      takenAt:
+          json['takenAt'] != null
+              ? (json['takenAt'] is int
+                  ? DateTime.fromMillisecondsSinceEpoch(json['takenAt'])
+                  : DateTime.parse(json['takenAt']))
+              : null,
       qrCode: json['qrCode'] ?? '',
     );
   }
@@ -141,6 +149,3 @@ extension AskiStatusExtension on AskiStatus {
     }
   }
 }
-
-
-

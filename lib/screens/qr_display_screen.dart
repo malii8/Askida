@@ -1,32 +1,87 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'dart:convert';
+import 'dart:async';
+import 'package:askida/services/aski_service.dart'; // AskiService eklendi
+import 'package:askida/models/aski_model.dart'; // AskiModel eklendi
+import 'dart:developer' as developer;
 
-class QRDisplayScreen extends StatelessWidget {
-  // StatefulWidget -> StatelessWidget
+class QRDisplayScreen extends StatefulWidget {
   final String askiId;
   final String productName;
   final String corporateName;
-  final String corporateId; // corporateId eklendi
+  final String corporateId;
 
   const QRDisplayScreen({
     super.key,
     required this.askiId,
     required this.productName,
     required this.corporateName,
-    required this.corporateId, // corporateId eklendi
+    required this.corporateId,
   });
+
+  @override
+  State<QRDisplayScreen> createState() => _QRDisplayScreenState();
+}
+
+class _QRDisplayScreenState extends State<QRDisplayScreen> {
+  final AskiService _askiService = AskiService();
+  StreamSubscription<AskiModel?>? _askiSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _listenForAskiStatus(); // Askı durumunu dinlemeye başla
+  }
+
+  void _listenForAskiStatus() {
+    _askiSubscription = _askiService.getAskiStream(widget.askiId).listen((
+      aski,
+    ) {
+      if (aski != null && aski.status == AskiStatus.taken) {
+        developer.log(
+          'Askı durumu "taken" olarak değişti. Ekran kapatılıyor.',
+          name: 'QRDisplayScreen',
+        );
+
+        // Ekran zaten kapatılıyorsa tekrar deneme
+        if (!mounted || !Navigator.canPop(context)) return;
+
+        // Onay mesajı göster
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ürün başarıyla teslim alındı!'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+
+        // Kısa bir bekleme sonrası ekranı kapat
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            Navigator.pop(context);
+          }
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _askiSubscription?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     // QR kod verisi oluştur
     final qrData = {
       'type': 'askida_product',
-      'askiId': askiId,
-      'productName': productName,
-      'corporateName': corporateName,
-      'corporateId': corporateId, // corporateId doğrudan kullanılıyor
-      'timestamp': DateTime.now().millisecondsSinceEpoch,
+      'askiId': widget.askiId,
+      'productName': widget.productName,
+      'corporateName': widget.corporateName,
+      'corporateId': widget.corporateId,
+      'timestamp': DateTime.now().millisecondsSinceEpoch.toString(),
     };
 
     final qrString = jsonEncode(qrData);
@@ -81,7 +136,7 @@ class QRDisplayScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.grey.withOpacity(0.3),
+                        color: const Color.fromRGBO(128, 128, 128, 0.3),
                         spreadRadius: 2,
                         blurRadius: 8,
                         offset: const Offset(0, 4),
@@ -138,7 +193,7 @@ class QRDisplayScreen extends StatelessWidget {
                         color: Colors.grey,
                       ),
                       const SizedBox(width: 8),
-                      Text('Ürün: ${productName}'),
+                      Text('Ürün: ${widget.productName}'),
                     ],
                   ),
                   const SizedBox(height: 4),
@@ -146,7 +201,7 @@ class QRDisplayScreen extends StatelessWidget {
                     children: [
                       const Icon(Icons.business, size: 20, color: Colors.grey),
                       const SizedBox(width: 8),
-                      Text('Firma: ${corporateName}'),
+                      Text('Firma: ${widget.corporateName}'),
                     ],
                   ),
                 ],

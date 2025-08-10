@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'dart:async'; // StreamSubscription için eklendi
 import '../models/aski_model.dart';
 import '../models/user_model.dart';
 import '../services/aski_service.dart';
 import '../services/user_service.dart';
+import '../services/notification_service.dart'; // NotificationService eklendi
+import '../models/notification_model.dart'; // NotificationModel eklendi
+import 'package:firebase_auth/firebase_auth.dart'; // FirebaseAuth eklendi
+import 'dart:developer' as developer; // Log için eklendi
 
 class FeedScreen extends StatefulWidget {
   const FeedScreen({super.key});
@@ -14,6 +19,9 @@ class FeedScreen extends StatefulWidget {
 class _FeedScreenState extends State<FeedScreen> {
   final AskiService _askiService = AskiService();
   final UserService _userService = UserService();
+  final NotificationService _notificationService =
+      NotificationService(); // NotificationService örneği
+  StreamSubscription<List<NotificationModel>>? _notificationSubscription;
 
   List<AskiModel> _askiList = [];
   List<AskiModel> _filteredAskiList = [];
@@ -26,12 +34,15 @@ class _FeedScreenState extends State<FeedScreen> {
   void initState() {
     super.initState();
     _loadData();
+    _listenForNotifications(); // Bildirimleri dinlemeye başla
   }
 
   Future<void> _loadData() async {
     try {
       // Kullanıcı bilgilerini yükle
-      final currentUser = await _userService.getCurrentUser();
+      final currentUser =
+          await _userService
+              .getCurrentUser(); // 'getCurrentnUser' -> 'getCurrentUser' olarak düzeltildi
       if (mounted) {
         setState(() {
           _currentUser = currentUser;
@@ -56,6 +67,65 @@ class _FeedScreenState extends State<FeedScreen> {
         });
       }
     }
+  }
+
+  void _listenForNotifications() {
+    final currentUserUid = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUserUid == null) return;
+
+    _notificationSubscription = _notificationService
+        .getUserNotificationsStream(
+          userId: currentUserUid,
+          includeRead: true,
+        ) // Okunmuş bildirimleri de dahil et
+        .listen((notifications) async {
+          developer.log(
+            'FeedScreen: Yeni bildirimler geldi. Sayı: ${notifications.length}',
+            name: 'FeedScreen',
+          );
+          for (var notification in notifications) {
+            if (!notification.isRead) {
+              if (mounted) {
+                developer.log(
+                  'FeedScreen: SnackBar gösteriliyor: ${notification.message}',
+                  name: 'FeedScreen',
+                );
+                _showNotificationSnackBar(notification);
+                // SnackBar'ın görünmesi için kısa bir gecikme ekle
+                await Future.delayed(
+                  const Duration(seconds: 1),
+                ); // Gecikmeyi 1 saniyeye çıkar
+              }
+              _notificationService.markAsRead(notification.id);
+              break; // Sadece ilk okunmamış bildirimi göster
+            }
+          }
+        });
+  }
+
+  @override
+  void dispose() {
+    _notificationSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _showNotificationSnackBar(NotificationModel notification) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(notification.message),
+        backgroundColor: Colors.blue,
+        duration: const Duration(seconds: 5),
+        action: SnackBarAction(
+          label: 'Görüntüle',
+          textColor: Colors.white,
+          onPressed: () {
+            // Bildirime tıklanınca ilgili ekrana yönlendirme yapılabilir
+            // Örneğin: Navigator.pushNamed(context, '/notifications');
+          },
+        ),
+      ),
+    );
   }
 
   @override

@@ -6,6 +6,8 @@ import '../services/aski_service.dart';
 import '../models/user_model.dart';
 import '../models/aski_model.dart';
 import 'dart:developer' as developer;
+import 'package:askida/services/notification_service.dart'; // NotificationService eklendi
+import 'package:askida/models/notification_model.dart'; // NotificationModel eklendi
 
 class QRValidatorScreen extends StatefulWidget {
   const QRValidatorScreen({super.key});
@@ -17,6 +19,8 @@ class QRValidatorScreen extends StatefulWidget {
 class _QRValidatorScreenState extends State<QRValidatorScreen> {
   final UserService _userService = UserService();
   final AskiService _askiService = AskiService();
+  final NotificationService _notificationService =
+      NotificationService(); // NotificationService örneği
   MobileScannerController cameraController = MobileScannerController();
   UserModel? _currentUser;
   bool _isProcessing = false;
@@ -78,7 +82,8 @@ class _QRValidatorScreenState extends State<QRValidatorScreen> {
 
       final String askiId = qrContent['askiId'];
       final String productName = qrContent['productName'];
-      final String? corporateId = qrContent['corporateId']; // Read corporateId
+      final String? corporateIdFromQR =
+          qrContent['corporateId']; // Read corporateId
 
       // Askıyı veritabanından kontrol et
       final aski = await _askiService.getAski(askiId);
@@ -88,6 +93,7 @@ class _QRValidatorScreenState extends State<QRValidatorScreen> {
           _validationMessage = 'Geçersiz QR kod - Askı bulunamadı';
           _isProcessing = false;
         });
+        cameraController.stop(); // Kamera durduruluyor
         return;
       }
 
@@ -96,15 +102,19 @@ class _QRValidatorScreenState extends State<QRValidatorScreen> {
           _validationMessage = 'Bu askı zaten tamamlanmış';
           _isProcessing = false;
         });
+        cameraController.stop(); // Kamera durduruluyor
         return;
       }
 
-      // Kurumsal kullanıcının bu ürünü verme yetkisi var mı kontrol et
-      if (_currentUser?.uid != corporateId) {
+      if (_currentUser?.userType == UserType.corporate &&
+          _currentUser?.corporateId != null &&
+          corporateIdFromQR != null &&
+          _currentUser!.corporateId != corporateIdFromQR) {
         setState(() {
-          _validationMessage = 'Bu ürün sizin firmanıza ait değil';
+          _validationMessage = 'Bu ürün sizin firmanıza ait değil.';
           _isProcessing = false;
         });
+        cameraController.stop(); // Kamera durduruluyor
         return;
       }
 
@@ -168,6 +178,44 @@ class _QRValidatorScreenState extends State<QRValidatorScreen> {
     try {
       // Askıyı tamamla
       await _askiService.completeAski(aski.id);
+
+      // Bildirim gönder
+      // Askı sahibine bildirim gönder
+      if (aski.donorUserId != _currentUser!.uid) {
+        developer.log(
+          'Bildirim gönderme koşulu sağlandı. Hedef Kullanıcı ID: ${aski.donorUserId}',
+          name: 'QRValidatorScreen',
+        );
+        try {
+          await _notificationService.createNotification(
+            userId: aski.donorUserId, // Askı sahibine bildirim
+            title: NotificationType.productClaimed.displayName,
+            message:
+                '\'${aski.productName}\' adlı askınız ${aski.corporateName} tarafından teslim alındı.',
+            type: NotificationType.productClaimed,
+            relatedPostId: aski.id,
+            relatedUserId: _currentUser?.uid,
+            data: {
+              'productName': aski.productName,
+              'corporateName': aski.corporateName,
+            },
+          );
+          developer.log(
+            'Bildirim başarıyla gönderildi.',
+            name: 'QRValidatorScreen',
+          );
+        } catch (e) {
+          developer.log(
+            'Bildirim gönderme hatası: $e',
+            name: 'QRValidatorScreen',
+          );
+        }
+      } else {
+        developer.log(
+          'Bildirim gönderme koşulu sağlanmadı: Askı sahibi ve teslim alan aynı kişi.',
+          name: 'QRValidatorScreen',
+        );
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

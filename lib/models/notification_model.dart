@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 enum NotificationType {
   applicationReceived,
   applicationAccepted,
@@ -80,19 +82,41 @@ class NotificationModel {
 
   // Firestore'dan veri okuma
   factory NotificationModel.fromMap(String id, Map<String, dynamic> map) {
+    // type alanı hem enum stringi hem de sadece enum adı olarak gelebilir
+    String typeString = map['type'] ?? '';
+    NotificationType typeEnum;
+    try {
+      typeEnum = NotificationType.values.firstWhere(
+        (e) => e.toString() == typeString || e.name == typeString,
+        orElse: () => NotificationType.adminNotification,
+      );
+    } catch (_) {
+      typeEnum = NotificationType.adminNotification;
+    }
+
+    // createdAt alanı hem string hem Timestamp olabilir
+    DateTime createdAt;
+    var createdAtRaw = map['createdAt'];
+    if (createdAtRaw is Timestamp) {
+      createdAt = createdAtRaw.toDate();
+    } else if (createdAtRaw is String) {
+      createdAt = DateTime.parse(createdAtRaw);
+    } else if (createdAtRaw is int) {
+      createdAt = DateTime.fromMillisecondsSinceEpoch(createdAtRaw);
+    } else {
+      createdAt = DateTime.now();
+    }
+
     return NotificationModel(
       id: id,
       userId: map['userId'] ?? '',
       title: map['title'] ?? '',
       message: map['message'] ?? '',
-      type: NotificationType.values.firstWhere(
-        (e) => e.toString() == map['type'],
-        orElse: () => NotificationType.adminNotification,
-      ),
+      type: typeEnum,
       relatedPostId: map['relatedPostId'],
       relatedUserId: map['relatedUserId'],
       isRead: map['isRead'] ?? false,
-      createdAt: DateTime.parse(map['createdAt']),
+      createdAt: createdAt,
       data: map['data']?.cast<String, dynamic>(),
     );
   }
@@ -103,7 +127,7 @@ class NotificationModel {
       'userId': userId,
       'title': title,
       'message': message,
-      'type': type.toString(),
+      'type': type.name, // type.toString() yerine type.name kullanıldı
       'relatedPostId': relatedPostId,
       'relatedUserId': relatedUserId,
       'isRead': isRead,
@@ -139,6 +163,3 @@ class NotificationModel {
     );
   }
 }
-
-
-
