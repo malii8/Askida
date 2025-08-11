@@ -2,15 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'dart:convert';
 import 'dart:async';
-import 'package:askida/services/aski_service.dart'; // AskiService eklendi
 import 'package:askida/models/aski_model.dart'; // AskiModel eklendi
-import 'dart:developer' as developer;
 
 class QRDisplayScreen extends StatefulWidget {
   final String askiId;
   final String productName;
   final String corporateName;
   final String corporateId;
+  final String? applicantUserId; // Yeni eklendi
 
   const QRDisplayScreen({
     super.key,
@@ -18,6 +17,7 @@ class QRDisplayScreen extends StatefulWidget {
     required this.productName,
     required this.corporateName,
     required this.corporateId,
+    this.applicantUserId, // Constructor'a eklendi
   });
 
   @override
@@ -25,50 +25,17 @@ class QRDisplayScreen extends StatefulWidget {
 }
 
 class _QRDisplayScreenState extends State<QRDisplayScreen> {
-  final AskiService _askiService = AskiService();
   StreamSubscription<AskiModel?>? _askiSubscription;
 
   @override
   void initState() {
     super.initState();
-    _listenForAskiStatus(); // Askı durumunu dinlemeye başla
-  }
-
-  void _listenForAskiStatus() {
-    _askiSubscription = _askiService.getAskiStream(widget.askiId).listen((
-      aski,
-    ) {
-      if (aski != null && aski.status == AskiStatus.taken) {
-        developer.log(
-          'Askı durumu "taken" olarak değişti. Ekran kapatılıyor.',
-          name: 'QRDisplayScreen',
-        );
-
-        // Ekran zaten kapatılıyorsa tekrar deneme
-        if (!mounted || !Navigator.canPop(context)) return;
-
-        // Onay mesajı göster
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Ürün başarıyla teslim alındı!'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
-        );
-
-        // Kısa bir bekleme sonrası ekranı kapat
-        Future.delayed(const Duration(seconds: 2), () {
-          if (mounted) {
-            Navigator.pop(context);
-          }
-        });
-      }
-    });
+    // _listenForAskiStatus(); // Askı durumunu dinlemeyi kaldır
   }
 
   @override
   void dispose() {
-    _askiSubscription?.cancel();
+    _askiSubscription?.cancel(); // Aboneliği iptal et
     super.dispose();
   }
 
@@ -81,6 +48,7 @@ class _QRDisplayScreenState extends State<QRDisplayScreen> {
       'productName': widget.productName,
       'corporateName': widget.corporateName,
       'corporateId': widget.corporateId,
+      'applicantUserId': widget.applicantUserId, // Yeni eklendi
       'timestamp': DateTime.now().millisecondsSinceEpoch.toString(),
     };
 

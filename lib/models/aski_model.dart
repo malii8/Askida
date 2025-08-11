@@ -9,10 +9,12 @@ class AskiModel {
   final String? message;
   final DateTime createdAt;
   final AskiStatus status;
+  final String category; // Ürün kategorisi eklendi
   final String? takenByUserId;
   final String? takenByUserName;
   final DateTime? takenAt;
   final String qrCode;
+  final PostType postType; // PostType eklendi
 
   AskiModel({
     required this.id,
@@ -25,6 +27,8 @@ class AskiModel {
     this.message,
     required this.createdAt,
     required this.status,
+    required this.category, // Constructor'a eklendi
+    required this.postType, // Constructor'a eklendi
     this.takenByUserId,
     this.takenByUserName,
     this.takenAt,
@@ -43,6 +47,8 @@ class AskiModel {
       'message': message,
       'createdAt': createdAt.toIso8601String(),
       'status': status.name,
+      'category': category, // toJson'a eklendi
+      'postType': postType.name, // toJson'a eklendi
       'takenByUserId': takenByUserId,
       'takenByUserName': takenByUserName,
       'takenAt': takenAt?.toIso8601String(),
@@ -68,6 +74,11 @@ class AskiModel {
         (e) => e.name == json['status'],
         orElse: () => AskiStatus.active,
       ),
+      category: json['category'] ?? 'Diğer', // fromJson'a eklendi
+      postType: PostType.values.firstWhere(
+        (e) => e.name == json['postType'],
+        orElse: () => PostType.firstComeFirstServe,
+      ), // fromJson'a eklendi
       takenByUserId: json['takenByUserId'],
       takenByUserName: json['takenByUserName'],
       takenAt:
@@ -91,6 +102,8 @@ class AskiModel {
     String? message,
     DateTime? createdAt,
     AskiStatus? status,
+    String? category, // copyWith'e eklendi
+    PostType? postType, // copyWith'e eklendi
     String? takenByUserId,
     String? takenByUserName,
     DateTime? takenAt,
@@ -107,6 +120,8 @@ class AskiModel {
       message: message ?? this.message,
       createdAt: createdAt ?? this.createdAt,
       status: status ?? this.status,
+      category: category ?? this.category, // copyWith'e eklendi
+      postType: postType ?? this.postType, // copyWith'e eklendi
       takenByUserId: takenByUserId ?? this.takenByUserId,
       takenByUserName: takenByUserName ?? this.takenByUserName,
       takenAt: takenAt ?? this.takenAt,
@@ -120,6 +135,7 @@ enum AskiStatus {
   taken, // Alındı
   expired, // Süresi doldu
   cancelled, // İptal edildi
+  completed, // Yeni eklendi
 }
 
 extension AskiStatusExtension on AskiStatus {
@@ -133,6 +149,8 @@ extension AskiStatusExtension on AskiStatus {
         return 'Süresi Doldu';
       case AskiStatus.cancelled:
         return 'İptal Edildi';
+      case AskiStatus.completed:
+        return 'Tamamlandı'; // Yeni eklendi
     }
   }
 
@@ -146,6 +164,24 @@ extension AskiStatusExtension on AskiStatus {
         return 'Askı süresi doldu';
       case AskiStatus.cancelled:
         return 'Askı iptal edildi';
+      case AskiStatus.completed:
+        return 'Askı tamamlandı'; // Yeni eklendi
+    }
+  }
+}
+
+enum PostType {
+  firstComeFirstServe, // İlk gelen alır
+  randomSelection, // Rastgele seçim
+}
+
+extension PostTypeExtension on PostType {
+  String get displayName {
+    switch (this) {
+      case PostType.firstComeFirstServe:
+        return 'İlk Gelen Alır';
+      case PostType.randomSelection:
+        return 'Rastgele Seçim';
     }
   }
 }

@@ -6,8 +6,6 @@ import '../services/aski_service.dart';
 import '../models/user_model.dart';
 import '../models/aski_model.dart';
 import 'dart:developer' as developer;
-import 'package:askida/services/notification_service.dart'; // NotificationService eklendi
-import 'package:askida/models/notification_model.dart'; // NotificationModel eklendi
 
 class QRValidatorScreen extends StatefulWidget {
   const QRValidatorScreen({super.key});
@@ -19,8 +17,6 @@ class QRValidatorScreen extends StatefulWidget {
 class _QRValidatorScreenState extends State<QRValidatorScreen> {
   final UserService _userService = UserService();
   final AskiService _askiService = AskiService();
-  final NotificationService _notificationService =
-      NotificationService(); // NotificationService örneği
   MobileScannerController cameraController = MobileScannerController();
   UserModel? _currentUser;
   bool _isProcessing = false;
@@ -76,16 +72,13 @@ class _QRValidatorScreenState extends State<QRValidatorScreen> {
     developer.log('Raw QR Data: $qrData', name: 'QRValidatorScreen');
 
     try {
-      // QR kodunu parse et
       final Map<String, dynamic> qrContent = jsonDecode(qrData);
       developer.log('Parsed QR Content: $qrContent', name: 'QRValidatorScreen');
 
       final String askiId = qrContent['askiId'];
-      final String productName = qrContent['productName'];
-      final String? corporateIdFromQR =
-          qrContent['corporateId']; // Read corporateId
+      final String? applicantUserIdFromQR =
+          qrContent['applicantUserId']; // QR'dan gelen applicantUserId
 
-      // Askıyı veritabanından kontrol et
       final aski = await _askiService.getAski(askiId);
 
       if (aski == null) {
@@ -93,151 +86,149 @@ class _QRValidatorScreenState extends State<QRValidatorScreen> {
           _validationMessage = 'Geçersiz QR kod - Askı bulunamadı';
           _isProcessing = false;
         });
-        cameraController.stop(); // Kamera durduruluyor
+        cameraController.stop();
         return;
       }
 
-      if (aski.status == AskiStatus.taken) {
-        setState(() {
-          _validationMessage = 'Bu askı zaten tamamlanmış';
-          _isProcessing = false;
-        });
-        cameraController.stop(); // Kamera durduruluyor
-        return;
-      }
-
-      if (_currentUser?.userType == UserType.corporate &&
-          _currentUser?.corporateId != null &&
-          corporateIdFromQR != null &&
-          _currentUser!.corporateId != corporateIdFromQR) {
-        setState(() {
-          _validationMessage = 'Bu ürün sizin firmanıza ait değil.';
-          _isProcessing = false;
-        });
-        cameraController.stop(); // Kamera durduruluyor
-        return;
-      }
-
-      // Başarılı doğrulama
-      await _showValidationSuccessDialog(aski, productName, aski.corporateName);
-    } catch (e) {
-      developer.log('QR code processing error: $e', name: 'QRValidatorScreen');
-      setState(() {
-        _validationMessage = 'QR kod okunamadı veya geçersiz format';
-        _isProcessing = false;
-      });
-    }
-  }
-
-  Future<void> _showValidationSuccessDialog(
-    AskiModel aski,
-    String productName,
-    String corporateName,
-  ) async {
-    final result = await showDialog<bool>(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('QR Kod Doğrulandı'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Ürün: $productName'),
-                Text('Firma: $corporateName'),
-                Text('Askı Sahibi: ${aski.donorUserName}'),
-                const SizedBox(height: 16),
-                const Text(
-                  'Ürünü teslim etmek istediğinizi onaylıyor musunuz?',
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('İptal'),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('Ürünü Teslim Et'),
-              ),
-            ],
-          ),
-    );
-
-    if (result == true) {
-      await _completeDelivery(aski);
-    } else {
-      setState(() {
-        _isProcessing = false;
-      });
-    }
-  }
-
-  Future<void> _completeDelivery(AskiModel aski) async {
-    try {
-      // Askıyı tamamla
-      await _askiService.completeAski(aski.id);
-
-      // Bildirim gönder
-      // Askı sahibine bildirim gönder
-      if (aski.donorUserId != _currentUser!.uid) {
+      if (_currentUser!.userType == UserType.corporate) {
         developer.log(
-          'Bildirim gönderme koşulu sağlandı. Hedef Kullanıcı ID: ${aski.donorUserId}',
+          'Corporate user scanning. Aski Status: ${aski.status}, Aski TakenByUserId: ${aski.takenByUserId}, QR ApplicantUserId: $applicantUserIdFromQR',
           name: 'QRValidatorScreen',
         );
-        try {
-          await _notificationService.createNotification(
-            userId: aski.donorUserId, // Askı sahibine bildirim
-            title: NotificationType.productClaimed.displayName,
-            message:
-                '\'${aski.productName}\' adlı askınız ${aski.corporateName} tarafından teslim alındı.',
-            type: NotificationType.productClaimed,
-            relatedPostId: aski.id,
-            relatedUserId: _currentUser?.uid,
-            data: {
-              'productName': aski.productName,
-              'corporateName': aski.corporateName,
-            },
-          );
-          developer.log(
-            'Bildirim başarıyla gönderildi.',
-            name: 'QRValidatorScreen',
-          );
-        } catch (e) {
-          developer.log(
-            'Bildirim gönderme hatası: $e',
-            name: 'QRValidatorScreen',
-          );
+        if (aski.status == AskiStatus.taken &&
+            aski.takenByUserId == applicantUserIdFromQR) {
+          // Corporate user is scanning a winner's QR code to finalize delivery
+          setState(() {
+            _validationMessage = 'Ürün teslimatı için QR kodu doğrulandı.';
+          });
+          _showCompletionDialog(aski);
+        } else if (aski.status == AskiStatus.completed) {
+          setState(() {
+            _validationMessage = 'Bu askı zaten tamamlanmış.';
+            _isProcessing = false;
+          });
+          cameraController.stop();
+        } else {
+          setState(() {
+            _validationMessage =
+                'Bu QR kodu bir kazanan tarafından sunulmadı veya askı durumu uygun değil.';
+            _isProcessing = false;
+          });
+          cameraController.stop();
         }
       } else {
-        developer.log(
-          'Bildirim gönderme koşulu sağlanmadı: Askı sahibi ve teslim alan aynı kişi.',
-          name: 'QRValidatorScreen',
-        );
-      }
+        // Individual user is scanning
+        if (aski.corporateId.isNotEmpty) {
+          setState(() {
+            _validationMessage =
+                'Bu askı sadece kurumsal kullanıcılar tarafından teslim edilebilir.';
+            _isProcessing = false;
+          });
+          cameraController.stop();
+          return;
+        }
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Ürün başarıyla teslim edildi!'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        if (aski.donorUserId == _currentUser!.uid) {
+          setState(() {
+            _validationMessage = 'Kendi askınızı teslim alamazsınız.';
+            _isProcessing = false;
+          });
+          cameraController.stop();
+          return;
+        }
 
-        // Ana sayfaya dön
-        Navigator.pop(context);
+        if (aski.status == AskiStatus.active) {
+          // Individual user trying to take an active aski via QR scan (not allowed on this screen)
+          setState(() {
+            _validationMessage =
+                'Bu ekran sadece kurumsal kullanıcılar içindir. Askı almak için ana sayfayı kullanın.';
+            _isProcessing = false;
+          });
+          cameraController.stop();
+        } else if (aski.status == AskiStatus.taken &&
+            aski.takenByUserId == _currentUser!.uid) {
+          // Individual user trying to scan their own won aski (should use QRDisplayScreen)
+          setState(() {
+            _validationMessage =
+                'Bu askıyı zaten kazandınız. QR kodunuzu göstermek için ana sayfadaki askı detaylarına gidin.';
+            _isProcessing = false;
+          });
+          cameraController.stop();
+        } else {
+          setState(() {
+            _validationMessage = 'Askı durumu uygun değil veya yetkiniz yok.';
+            _isProcessing = false;
+          });
+          cameraController.stop();
+        }
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Hata: $e'), backgroundColor: Colors.red),
-        );
-        setState(() {
-          _isProcessing = false;
-        });
-      }
+      developer.log('QR kod işleme hatası: $e', name: 'QRValidatorScreen');
+      setState(() {
+        _validationMessage = 'QR kodu işlenirken bir hata oluştu: $e';
+        _isProcessing = false;
+      });
+      cameraController.stop();
+    } finally {
+      // No need to restart camera here, it's handled in dialogs or error states
     }
+  }
+
+  Future<void> _showCompletionDialog(AskiModel aski) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // User must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Askı Tamamlama'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text(
+                  '${aski.productName} adlı askıyı ${aski.takenByUserId == _currentUser!.uid ? 'siz' : aski.takenByUserName} teslim alacak.',
+                ),
+                const Text('Bu işlemi onaylıyor musunuz?'),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('İptal'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                setState(() {
+                  _isProcessing = false;
+                  _validationMessage = null;
+                });
+                cameraController.start(); // Restart camera
+              },
+            ),
+            TextButton(
+              child: const Text('Onayla'),
+              onPressed: () async {
+                Navigator.of(context).pop();
+                try {
+                  await _askiService.completeAski(aski.id);
+                  setState(() {
+                    _validationMessage = 'Askı başarıyla tamamlandı!';
+                  });
+                  // Optionally navigate to a success screen or home
+                } catch (e) {
+                  setState(() {
+                    _validationMessage = 'Askı tamamlama hatası: $e';
+                  });
+                } finally {
+                  setState(() {
+                    _isProcessing = false;
+                  });
+                  cameraController.start(); // Restart camera
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override

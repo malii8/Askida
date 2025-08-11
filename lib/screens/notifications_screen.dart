@@ -18,7 +18,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   @override
   void initState() {
     super.initState();
-    _notificationsStream = _notificationService.getUserNotificationsStream();
+    _notificationsStream = _notificationService.getUserNotificationsStream(
+      includeRead: true,
+    );
   }
 
   @override
@@ -152,15 +154,51 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
   }
 
-  void _onNotificationTap(NotificationModel notification) {
+  void _onNotificationTap(NotificationModel notification) async {
     // Bildirimi okundu olarak işaretle
     if (!notification.isRead) {
       _markAsRead(notification.id);
     }
 
-    // İlgili post varsa detay sayfasını aç
-    if (notification.relatedPostId != null) {
-      _navigateToPost(notification.relatedPostId!);
+    // Bildirim tipine göre yönlendirme yap
+    switch (notification.type) {
+      case NotificationType.applicationReceived:
+      case NotificationType.applicationAccepted:
+      case NotificationType.applicationRejected:
+      case NotificationType.postExpired:
+      case NotificationType.newMessage:
+      case NotificationType.adminNotification:
+      case NotificationType.productClaimed:
+      case NotificationType.askiTaken: // Handle new case
+      case NotificationType.other:
+        if (notification.relatedPostId != null) {
+          _navigateToPost(notification.relatedPostId!);
+        }
+        break;
+      case NotificationType.askiWon:
+        if (notification.relatedPostId != null && notification.data != null) {
+          // QRDisplayScreen'e yönlendir
+          final askiId = notification.relatedPostId!;
+          final productName = notification.data!['productName'] as String;
+          final corporateName = notification.data!['corporateName'] as String;
+          final corporateId = notification.data!['corporateId'] as String;
+          final applicantUserId =
+              notification.data!['applicantUserId'] as String?;
+
+          if (mounted) {
+            Navigator.of(context).pushNamed(
+              '/qrDisplay',
+              arguments: {
+                'askiId': askiId,
+                'productName': productName,
+                'corporateName': corporateName,
+                'corporateId': corporateId,
+                'applicantUserId': applicantUserId,
+              },
+            );
+          }
+        }
+        break;
     }
   }
 
@@ -310,9 +348,17 @@ class _NotificationTile extends StatelessWidget {
         icon = Icons.shopping_bag;
         color = Colors.green;
         break;
-      case NotificationType.other:
-        icon = Icons.notifications;
-        color = Colors.blue;
+      case NotificationType.askiWon:
+        icon = Icons.emoji_events; // Kupa veya ödül ikonu
+        color = Colors.amber; // Altın rengi
+        break;
+      case NotificationType.askiTaken:
+        icon = Icons.check_circle_outline; // Checkmark icon
+        color = Colors.teal; // A distinct color
+        break;
+      default:
+        icon = Icons.info; // Default icon
+        color = Colors.grey; // Default color
         break;
     }
 

@@ -519,6 +519,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         return Colors.orange;
       case AskiStatus.cancelled:
         return Colors.red;
+      case AskiStatus.completed:
+        return Colors.purple; // Choose an appropriate color
     }
   }
 
@@ -532,6 +534,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         return 'Süresi Doldu';
       case AskiStatus.cancelled:
         return 'İptal Edildi';
+      case AskiStatus.completed:
+        return 'Tamamlandı'; // Add text for completed status
     }
   }
 

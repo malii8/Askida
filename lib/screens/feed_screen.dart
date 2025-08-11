@@ -8,6 +8,7 @@ import '../services/notification_service.dart'; // NotificationService eklendi
 import '../models/notification_model.dart'; // NotificationModel eklendi
 import 'package:firebase_auth/firebase_auth.dart'; // FirebaseAuth eklendi
 import 'dart:developer' as developer; // Log için eklendi
+import '../models/application_model.dart'; // ApplicationModel eklendi
 
 class FeedScreen extends StatefulWidget {
   const FeedScreen({super.key});
@@ -24,7 +25,7 @@ class _FeedScreenState extends State<FeedScreen> {
   StreamSubscription<List<NotificationModel>>? _notificationSubscription;
 
   List<AskiModel> _askiList = [];
-  List<AskiModel> _filteredAskiList = [];
+  final List<AskiModel> _filteredAskiList = [];
   UserModel? _currentUser;
   bool _isLoading = true;
   String _selectedCategory = 'Tümü';
@@ -40,9 +41,7 @@ class _FeedScreenState extends State<FeedScreen> {
   Future<void> _loadData() async {
     try {
       // Kullanıcı bilgilerini yükle
-      final currentUser =
-          await _userService
-              .getCurrentUser(); // 'getCurrentnUser' -> 'getCurrentUser' olarak düzeltildi
+      final currentUser = await _userService.getCurrentUser();
       if (mounted) {
         setState(() {
           _currentUser = currentUser;
@@ -50,12 +49,20 @@ class _FeedScreenState extends State<FeedScreen> {
       }
 
       // Aktif askıları yükle
-      final askiStream = _askiService.getActiveAskis();
+      final askiStream = _askiService.getFilteredAskis(
+        category: _selectedCategory,
+        status: _selectedStatus, // Durum filtresi eklendi
+        takenByUserId:
+            _selectedStatus == AskiStatus.taken
+                ? _currentUser?.uid
+                : null, // Alınan askılar için kullanıcı ID'si
+      );
       askiStream.listen((askiList) {
         if (mounted) {
           setState(() {
             _askiList = askiList;
-            _applyFilters();
+            _filteredAskiList.clear(); // Mevcut filtreli listeyi temizle
+            _filteredAskiList.addAll(askiList); // Yeni listeyi ekle
             _isLoading = false;
           });
         }
@@ -120,10 +127,21 @@ class _FeedScreenState extends State<FeedScreen> {
           label: 'Görüntüle',
           textColor: Colors.white,
           onPressed: () {
-            // Bildirime tıklanınca ilgili ekrana yönlendirme yapılabilir
-            // Örneğin: Navigator.pushNamed(context, '/notifications');
+            // Always navigate to the notifications screen
+            Navigator.of(context).pushNamed('/notifications');
           },
         ),
+      ),
+    );
+  }
+
+  void _showError(String message) async {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }
@@ -162,30 +180,11 @@ class _FeedScreenState extends State<FeedScreen> {
   }
 
   void _applyFilters() {
-    List<AskiModel> filtered = List.from(_askiList);
-
-    // Durum filtresi
-    if (_selectedStatus != null) {
-      filtered =
-          filtered.where((aski) => aski.status == _selectedStatus).toList();
-    }
-
-    // Kategori filtresi için product bilgisini almak gerekiyor
-    // Şimdilik sadece isme göre arama yapabiliriz
-    if (_selectedCategory != 'Tümü') {
-      filtered =
-          filtered
-              .where(
-                (aski) => aski.productName.toLowerCase().contains(
-                  _selectedCategory.toLowerCase(),
-                ),
-              )
-              .toList();
-    }
-
+    // _loadData'yı yeniden tetikleyerek filtrelemeyi Firestore seviyesinde yap
     setState(() {
-      _filteredAskiList = filtered;
+      _isLoading = true;
     });
+    _loadData();
   }
 
   void _showFilterDialog() {
@@ -299,9 +298,6 @@ class _FeedScreenState extends State<FeedScreen> {
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    setState(() {
-                      // Dialog'dan main state'e değerleri aktar
-                    });
                     _applyFilters();
                     Navigator.pop(context);
                   },
@@ -378,8 +374,8 @@ class _FeedScreenState extends State<FeedScreen> {
           final aski = displayList[index];
           return _buildAskiCard(aski);
         },
-      ),
-    );
+      ), // ListView.builder kapanışı
+    ); // RefreshIndicator kapanışı
   }
 
   Widget _buildAskiCard(AskiModel aski) {
@@ -537,115 +533,356 @@ class _FeedScreenState extends State<FeedScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: InkWell(
-                      onTap:
-                          aski.status == AskiStatus.active
-                              ? () {
-                                if (_currentUser?.userType ==
-                                    UserType.corporate) {
-                                  // Kurumsal kullanıcılar askıdan ürün alamaz
-                                  _showCorporateInfoDialog();
-                                } else {
-                                  // Bireysel kullanıcılar için ürün alma
-                                  if (aski.donorUserId == _currentUser?.uid) {
-                                    // Kendi ürününü alamaz
-                                    _showOwnProductDialog();
-                                  } else {
-                                    // Ürünü al ve QR göster
-                                    _showTakeProductDialog(aski);
-                                  }
-                                }
-                              }
-                              : null,
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color:
-                              aski.status == AskiStatus.active
-                                  ? (_currentUser?.userType ==
-                                          UserType.corporate
-                                      ? Colors.grey.shade50
-                                      : (aski.donorUserId == _currentUser?.uid
-                                          ? Colors.red.shade50
-                                          : Colors.green.shade50))
-                                  : Colors.grey.shade100,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color:
-                                aski.status == AskiStatus.active
-                                    ? (_currentUser?.userType ==
-                                            UserType.corporate
-                                        ? Colors.grey.shade200
-                                        : (aski.donorUserId == _currentUser?.uid
-                                            ? Colors.red.shade200
-                                            : Colors.green.shade200))
-                                    : Colors.grey.shade300,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              _currentUser?.userType == UserType.corporate
-                                  ? Icons.info
-                                  : (aski.donorUserId == _currentUser?.uid
-                                      ? Icons.block
-                                      : Icons.shopping_cart),
-                              color:
-                                  aski.status == AskiStatus.active
-                                      ? (_currentUser?.userType ==
-                                              UserType.corporate
-                                          ? Colors.grey.shade600
-                                          : (aski.donorUserId ==
-                                                  _currentUser?.uid
-                                              ? Colors.red.shade600
-                                              : Colors.green.shade600))
-                                      : Colors.grey.shade500,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                _currentUser?.userType == UserType.corporate
-                                    ? 'Sadece mağazada QR okut'
-                                    : (aski.donorUserId == _currentUser?.uid
-                                        ? 'Kendi ürününüz'
-                                        : 'QR Okut'),
-                                style: TextStyle(
-                                  color:
-                                      aski.status == AskiStatus.active
-                                          ? (_currentUser?.userType ==
-                                                  UserType.corporate
-                                              ? Colors.grey.shade700
-                                              : (aski.donorUserId ==
-                                                      _currentUser?.uid
-                                                  ? Colors.red.shade700
-                                                  : Colors.green.shade700))
-                                          : Colors.grey.shade600,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                            if (aski.status == AskiStatus.active &&
-                                _currentUser?.userType != UserType.corporate &&
-                                aski.donorUserId != _currentUser?.uid)
-                              Icon(
-                                Icons.arrow_forward_ios,
-                                color: Colors.green.shade600,
-                                size: 16,
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
+                    child: _buildAskiCardActions(aski), // Yeni metod çağrısı
                   ),
                 ],
               ),
             ],
           ),
         ),
-      ),
+      ), // Padding kapanışı
+    ); // Card kapanışı
+  }
+
+  // Yeni metod: Askı kartı aksiyonlarını gönderi tipine göre oluştur
+  Widget _buildAskiCardActions(AskiModel aski) {
+    // Eğer askı aktif değilse, aksiyon gösterme
+    if (aski.status != AskiStatus.active) {
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey.shade300),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.info_outline, color: Colors.grey.shade500, size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                _getStatusText(aski.status),
+                style: TextStyle(
+                  color: Colors.grey.shade600,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Aktif askılar için gönderi tipine göre aksiyonlar
+    if (aski.postType == PostType.firstComeFirstServe) {
+      return InkWell(
+        onTap: () {
+          if (_currentUser?.userType == UserType.corporate) {
+            _showCorporateInfoDialog();
+          } else {
+            if (aski.donorUserId == _currentUser?.uid) {
+              _showOwnProductDialog();
+            } else {
+              _showTakeProductDialog(aski);
+            }
+          }
+        },
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color:
+                _currentUser?.userType == UserType.corporate
+                    ? Colors.grey.shade50
+                    : (aski.donorUserId == _currentUser?.uid
+                        ? Colors.red.shade50
+                        : Colors.green.shade50),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color:
+                  _currentUser?.userType == UserType.corporate
+                      ? Colors.grey.shade200
+                      : (aski.donorUserId == _currentUser?.uid
+                          ? Colors.red.shade200
+                          : Colors.green.shade200),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                _currentUser?.userType == UserType.corporate
+                    ? Icons.info
+                    : (aski.donorUserId == _currentUser?.uid
+                        ? Icons.block
+                        : Icons.shopping_cart),
+                color:
+                    _currentUser?.userType == UserType.corporate
+                        ? Colors.grey.shade600
+                        : (aski.donorUserId == _currentUser?.uid
+                            ? Colors.red.shade600
+                            : Colors.green.shade600),
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  _currentUser?.userType == UserType.corporate
+                      ? 'Sadece mağazada QR okut'
+                      : (aski.donorUserId == _currentUser?.uid
+                          ? 'Kendi ürününüz'
+                          : 'QR Okut'),
+                  style: TextStyle(
+                    color:
+                        _currentUser?.userType == UserType.corporate
+                            ? Colors.grey.shade700
+                            : (aski.donorUserId == _currentUser?.uid
+                                ? Colors.red.shade700
+                                : Colors.green.shade700),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              if (_currentUser?.userType != UserType.corporate &&
+                  aski.donorUserId != _currentUser?.uid)
+                Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.green.shade600,
+                  size: 16,
+                ),
+            ],
+          ),
+        ),
+      );
+    } else if (aski.postType == PostType.randomSelection) {
+      // Rastgele seçim askıları için farklı aksiyonlar
+      if (aski.donorUserId == _currentUser?.uid) {
+        // Sadece askı sahibi görebilir
+        // Askı sahibi ise başvuruları gör ve rastgele seç
+        return InkWell(
+          onTap: () => _showApplicationsDialog(aski), // Yeni dialog
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.blue.shade200),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.people_alt, color: Colors.blue.shade600, size: 20),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'Başvuruları Görüntüle',
+                    style: TextStyle(
+                      color: Colors.blue,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.blue.shade600,
+                  size: 16,
+                ),
+              ],
+            ),
+          ),
+        );
+      } else if (_currentUser?.userType == UserType.individual) {
+        // Bireysel kullanıcı ise başvur butonu
+        return InkWell(
+          onTap: () => _applyToRandomAski(aski), // Yeni metod
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.purple.shade50,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.purple.shade200),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.how_to_reg, color: Colors.purple.shade600, size: 20),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'Başvur',
+                    style: TextStyle(
+                      color: Colors.purple,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.purple.shade600,
+                  size: 16,
+                ),
+              ],
+            ),
+          ),
+        );
+      } else {
+        // Kurumsal kullanıcı ise bilgi mesajı
+        return InkWell(
+          onTap: _showCorporateInfoDialog,
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info, color: Colors.grey.shade600, size: 20),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'Kurumsal kullanıcılar başvuru yapamaz',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+    }
+    return const SizedBox.shrink(); // Varsayılan olarak boş döndür
+  }
+
+  // Yeni metod: Rastgele seçim askısına başvur
+  Future<void> _applyToRandomAski(AskiModel aski) async {
+    if (_currentUser == null) {
+      _showError('Başvuru yapmak için giriş yapmalısınız.');
+      return;
+    }
+    setState(() => _isLoading = true);
+    try {
+      final success = await _askiService.applyToAski(aski.id);
+      if (mounted) {
+        setState(() => _isLoading = false);
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Askıya başarıyla başvurdunuz!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else {
+          _showError('Başvuru yapılamadı veya zaten başvuruldu.');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        _showError('Başvuru sırasında hata oluştu: $e');
+      }
+    }
+  }
+
+  // Yeni metod: Başvuruları görüntüle ve rastgele seç
+  void _showApplicationsDialog(AskiModel aski) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Başvurular'),
+          content: StreamBuilder<List<ApplicationModel>>(
+            stream: _askiService.getApplicationsForAski(aski.id),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (snapshot.hasError) {
+                return Center(child: Text('Hata: ${snapshot.error}'));
+              }
+              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return const Center(child: Text('Henüz başvuru yok.'));
+              }
+
+              final applications = snapshot.data!;
+
+              return SizedBox(
+                width: double.maxFinite,
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: applications.length,
+                  itemBuilder: (context, index) {
+                    final app = applications[index];
+                    return ListTile(
+                      title: Text(app.applicantUserName),
+                      subtitle: Text(app.status.displayName),
+                      trailing:
+                          app.status == ApplicationStatus.accepted
+                              ? const Icon(
+                                Icons.check_circle,
+                                color: Colors.green,
+                              )
+                              : app.status == ApplicationStatus.rejected
+                              ? const Icon(Icons.cancel, color: Colors.red)
+                              : null,
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Kapat'),
+            ),
+            if (aski.status == AskiStatus.active &&
+                aski.donorUserId ==
+                    _currentUser?.uid) // Sadece askı sahibi seçebilir
+              ElevatedButton(
+                onPressed: () async {
+                  final currentContext =
+                      context; // BuildContext'i async işlemden önce yakala
+                  setState(() => _isLoading = true);
+                  final selectedApplicant = await _askiService
+                      .selectRandomApplicant(aski.id);
+                  if (mounted) {
+                    setState(() => _isLoading = false);
+                    if (selectedApplicant != null) {
+                      if (currentContext.mounted) {
+                        // Add this check
+                        ScaffoldMessenger.of(currentContext).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Kazanan seçildi: ${selectedApplicant.applicantUserName}',
+                            ),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      }
+                      if (dialogContext.mounted) {
+                        // dialogContext'in mounted olup olmadığını kontrol et
+                        Navigator.pop(dialogContext); // Dialogu kapat
+                      }
+                    } else {
+                      _showError('Kazanan seçilemedi veya başvuru yok.');
+                    }
+                  }
+                },
+                child: const Text('Rastgele Seç'),
+              ),
+          ],
+        );
+      },
     );
   }
 
@@ -674,6 +911,8 @@ class _FeedScreenState extends State<FeedScreen> {
         return Colors.orange;
       case AskiStatus.cancelled:
         return Colors.red;
+      case AskiStatus.completed:
+        return Colors.purple; // Choose an appropriate color
     }
   }
 
@@ -687,6 +926,8 @@ class _FeedScreenState extends State<FeedScreen> {
         return 'Süresi Doldu';
       case AskiStatus.cancelled:
         return 'İptal Edildi';
+      case AskiStatus.completed:
+        return 'Tamamlandı'; // Add text for completed status
     }
   }
 
@@ -838,33 +1079,41 @@ class _FeedScreenState extends State<FeedScreen> {
   }
 
   // QR kod ekranına yönlendir
-  void _navigateToQRDisplay(AskiModel aski) {
+  void _navigateToQRDisplay(AskiModel aski) async {
+    // async eklendi
+    final currentContext = context; // BuildContext'i async işlemden önce yakala
     Navigator.pushNamed(
-      context,
+      currentContext,
       '/qrDisplay',
       arguments: {
         'askiId': aski.id,
         'productName': aski.productName,
         'corporateName': aski.corporateName,
-        'corporateId': aski.corporateId, // corporateId eklendi
+        'corporateId': aski.corporateId,
+        'applicantUserId': _currentUser?.uid,
       },
     );
 
     // Bilgi mesajı
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Row(
-          children: [
-            Icon(Icons.qr_code, color: Colors.white),
-            SizedBox(width: 8),
-            Text('QR kodu mağazada gösterin'),
-          ],
+    if (currentContext.mounted) {
+      // mounted kontrolü eklendi
+      ScaffoldMessenger.of(currentContext).showSnackBar(
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.qr_code, color: Colors.white),
+              SizedBox(width: 8),
+              Text('QR kodu mağazada gösterin'),
+            ],
+          ),
+          backgroundColor: Colors.blue,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
-        backgroundColor: Colors.blue,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
+      );
+    }
   }
 }
 

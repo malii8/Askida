@@ -61,15 +61,16 @@ class _ProfileScreenState extends State<ProfileScreen>
         });
 
         // Kullanıcının aldığı askıları yükle (takenByUserId'si currentUser.uid olan askılar)
-        final allAskisStream = _askiService.getActiveAskis();
-        allAskisStream.listen((allAskis) {
-          final takenByUser =
-              allAskis
-                  .where((aski) => aski.takenByUserId == currentUser.uid)
-                  .toList();
+        final takenAskisStream = _askiService.getFilteredAskis(
+          status:
+              AskiStatus
+                  .completed, // Change from AskiStatus.taken to AskiStatus.completed
+          takenByUserId: currentUser.uid,
+        );
+        takenAskisStream.listen((takenAskis) {
           if (mounted) {
             setState(() {
-              _takenAskis = takenByUser;
+              _takenAskis = takenAskis;
             });
           }
         });
@@ -103,8 +104,15 @@ class _ProfileScreenState extends State<ProfileScreen>
     return {
       'total': askis.length,
       'active': askis.where((a) => a.status == AskiStatus.active).length,
-      'taken': askis.where((a) => a.status == AskiStatus.taken).length,
+      'taken':
+          askis
+              .where((a) => a.status == AskiStatus.completed)
+              .length, // Changed to completed
       'expired': askis.where((a) => a.status == AskiStatus.expired).length,
+      'completed':
+          askis
+              .where((a) => a.status == AskiStatus.completed)
+              .length, // Added for consistency
     };
   }
 
@@ -786,6 +794,8 @@ class _ProfileScreenState extends State<ProfileScreen>
         return Colors.orange;
       case AskiStatus.cancelled:
         return Colors.red;
+      case AskiStatus.completed:
+        return Colors.purple; // Choose an appropriate color
     }
   }
 
@@ -799,6 +809,8 @@ class _ProfileScreenState extends State<ProfileScreen>
         return 'Süresi Doldu';
       case AskiStatus.cancelled:
         return 'İptal Edildi';
+      case AskiStatus.completed:
+        return 'Tamamlandı'; // Add text for completed status
     }
   }
 

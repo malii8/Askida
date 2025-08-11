@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/product_service.dart';
 import '../services/aski_service.dart';
 import '../models/product_model.dart';
+import 'package:askida/models/aski_model.dart'; // PostType için eklendi
 
 class CorporateProductsListScreen extends StatefulWidget {
   const CorporateProductsListScreen({super.key});
@@ -346,6 +347,7 @@ class _CorporateProductsListScreenState
                     messageController.text.trim().isEmpty
                         ? null
                         : messageController.text.trim(),
+                    PostType.firstComeFirstServe, // PostType eklendi
                   );
 
                   if (!mounted) return;
@@ -468,6 +470,3 @@ class _CorporateProductsListScreenState
     );
   }
 }
-
-
-

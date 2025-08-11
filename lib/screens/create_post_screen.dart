@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:askida/models/aski_model.dart'; // AskiModel ve PostType için eklendi
 import '../models/product_model.dart';
 import '../models/user_model.dart';
 import '../services/aski_service.dart';
@@ -25,6 +26,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   UserModel? _selectedCorporate;
   String? _selectedCategory;
   ProductModel? _selectedProduct;
+  PostType _selectedPostType = PostType.firstComeFirstServe; // Varsayılan değer
 
   // Askı detayları
   final _messageController = TextEditingController();
@@ -133,6 +135,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         _messageController.text.trim().isNotEmpty
             ? _messageController.text.trim()
             : null,
+        _selectedPostType, // PostType eklendi
       );
 
       setState(() => _isLoading = false);
@@ -760,6 +763,41 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 _buildSummaryRow('Ürün', _selectedProduct?.name ?? ''),
               ],
             ),
+          ),
+
+          const SizedBox(height: 24),
+
+          // Gönderi Tipi Seçimi
+          const Text(
+            'Gönderi Tipi:',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<PostType>(
+            value: _selectedPostType,
+            decoration: InputDecoration(
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              filled: true,
+              fillColor: Colors.grey.shade50,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 8,
+              ),
+            ),
+            items:
+                PostType.values.map((type) {
+                  return DropdownMenuItem(
+                    value: type,
+                    child: Text(type.displayName),
+                  );
+                }).toList(),
+            onChanged: (value) {
+              setState(() {
+                _selectedPostType = value!;
+              });
+            },
           ),
 
           const SizedBox(height: 24),

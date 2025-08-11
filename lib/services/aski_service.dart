@@ -1,18 +1,29 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:rxdart/rxdart.dart';
 import 'dart:convert';
 import 'dart:developer' as developer;
 import '../models/aski_model.dart';
 import '../models/product_model.dart';
+import '../models/application_model.dart'; // ApplicationModel eklendi
+import '../models/notification_model.dart'; // NotificationModel ve NotificationType eklendi
 import '../services/user_service.dart';
+import '../services/notification_service.dart'; // NotificationService eklendi
+import 'dart:math'; // Random sınıfı için eklendi
 
 class AskiService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final UserService _userService = UserService();
+  final NotificationService _notificationService =
+      NotificationService(); // NotificationService örneği
 
   // Askı oluşturma
-  Future<String?> createAski(ProductModel product, String? message) async {
+  Future<String?> createAski(
+    ProductModel product,
+    String? message,
+    PostType postType,
+  ) async {
     try {
       final currentUser = _auth.currentUser;
       if (currentUser == null) return null;
@@ -47,6 +58,8 @@ class AskiService {
         message: message,
         createdAt: DateTime.now(),
         status: AskiStatus.active,
+        category: product.category, // Kategori eklendi
+        postType: postType, // PostType eklendi
         qrCode: jsonEncode(qrData),
       );
 
@@ -103,36 +116,88 @@ class AskiService {
       'getUserAskis çağrıldı, userId: $userId',
       name: 'AskiService',
     );
-    return _firestore
-        .collection('askis')
-        .where('donorUserId', isEqualTo: userId)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snapshot) {
-          final askis =
-              snapshot.docs.map((doc) {
-                return AskiModel.fromJson(doc.data());
-              }).toList();
-          developer.log(
-            'getUserAskis sonuç: ${askis.length} askı bulundu',
-            name: 'AskiService',
-          );
-          return askis;
-        });
+    // Query for askis where the user is the donor
+    final donorAskisStream =
+        _firestore
+            .collection('askis')
+            .where('donorUserId', isEqualTo: userId)
+            .orderBy('createdAt', descending: true)
+            .snapshots();
+
+    // Query for askis where the user has taken the aski
+    final takenAskisStream =
+        _firestore
+            .collection('askis')
+            .where('takenByUserId', isEqualTo: userId)
+            .orderBy('createdAt', descending: true)
+            .snapshots();
+
+    // Combine the two streams
+    return Rx.combineLatest2(donorAskisStream, takenAskisStream, (
+      QuerySnapshot donorSnapshot,
+      QuerySnapshot takenSnapshot,
+    ) {
+      final Set<AskiModel> combinedAskis = {};
+
+      for (var doc in donorSnapshot.docs) {
+        combinedAskis.add(
+          AskiModel.fromJson(doc.data() as Map<String, dynamic>),
+        );
+      }
+      for (var doc in takenSnapshot.docs) {
+        combinedAskis.add(
+          AskiModel.fromJson(doc.data() as Map<String, dynamic>),
+        );
+      }
+
+      final askis = combinedAskis.toList();
+      askis.sort(
+        (a, b) => b.createdAt.compareTo(a.createdAt),
+      ); // Sort by createdAt descending
+
+      developer.log(
+        'getUserAskis sonuç: ${askis.length} askı bulundu',
+        name: 'AskiService',
+      );
+      return askis;
+    });
   }
 
   // Aktif askıları getirme
-  Stream<List<AskiModel>> getActiveAskis() {
-    return _firestore
+  Stream<List<AskiModel>> getFilteredAskis({
+    String? category,
+    AskiStatus? status,
+    String? takenByUserId,
+    String? corporateId, // Yeni eklendi
+  }) {
+    Query query = _firestore
         .collection('askis')
-        .where('status', isEqualTo: 'active')
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snapshot) {
-          return snapshot.docs.map((doc) {
-            return AskiModel.fromJson(doc.data());
-          }).toList();
-        });
+        .orderBy('createdAt', descending: true);
+
+    if (corporateId != null) {
+      query = query.where('corporateId', isEqualTo: corporateId);
+    }
+
+    if (status != null) {
+      query = query.where('status', isEqualTo: status.name);
+    } else {
+      // Varsayılan olarak aktif askıları göster
+      query = query.where('status', isEqualTo: AskiStatus.active.name);
+    }
+
+    if (category != null && category != 'Tümü') {
+      query = query.where('category', isEqualTo: category);
+    }
+
+    if (takenByUserId != null && status == AskiStatus.taken) {
+      query = query.where('takenByUserId', isEqualTo: takenByUserId);
+    }
+
+    return query.snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) {
+        return AskiModel.fromJson(doc.data() as Map<String, dynamic>);
+      }).toList();
+    });
   }
 
   // Kurumsal kullanıcının askılarını getirme
@@ -218,6 +283,172 @@ class AskiService {
     }
   }
 
+  // Rastgele seçim askısına başvuru yapma
+  Future<bool> applyToAski(String askiId) async {
+    try {
+      final currentUser = _auth.currentUser;
+      if (currentUser == null) return false;
+
+      final userModel = await _userService.getCurrentUser();
+      if (userModel == null) return false;
+
+      // Zaten başvurmuş mu kontrol et
+      final existingApplication =
+          await _firestore
+              .collection('askis')
+              .doc(askiId)
+              .collection('applications')
+              .where('applicantUserId', isEqualTo: currentUser.uid)
+              .get();
+
+      if (existingApplication.docs.isNotEmpty) {
+        developer.log(
+          'Kullanıcı zaten bu askıya başvurmuş.',
+          name: 'AskiService',
+        );
+        return false; // Zaten başvurmuş
+      }
+
+      final application = ApplicationModel(
+        id: '',
+        askiId: askiId,
+        applicantUserId: currentUser.uid,
+        applicantUserName: userModel.fullName,
+        appliedAt: DateTime.now(),
+        status: ApplicationStatus.pending,
+      );
+
+      await _firestore
+          .collection('askis')
+          .doc(askiId)
+          .collection('applications')
+          .add(application.toJson());
+
+      developer.log(
+        'Askıya başarıyla başvuruldu: $askiId',
+        name: 'AskiService',
+      );
+      return true;
+    } catch (e) {
+      developer.log('Askıya başvuru hatası: $e', name: 'AskiService');
+      return false;
+    }
+  }
+
+  // Bir askıya yapılan başvuruları getirme
+  Stream<List<ApplicationModel>> getApplicationsForAski(String askiId) {
+    return _firestore
+        .collection('askis')
+        .doc(askiId)
+        .collection('applications')
+        .orderBy('appliedAt', descending: true)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs.map((doc) {
+            return ApplicationModel.fromMap(doc.id, doc.data());
+          }).toList();
+        });
+  }
+
+  // Rastgele seçim askısı için kazananı seçme
+  Future<ApplicationModel?> selectRandomApplicant(String askiId) async {
+    try {
+      final applicationsSnapshot =
+          await _firestore
+              .collection('askis')
+              .doc(askiId)
+              .collection('applications')
+              .where('status', isEqualTo: ApplicationStatus.pending.name)
+              .get();
+
+      if (applicationsSnapshot.docs.isEmpty) {
+        developer.log(
+          'Bu askı için bekleyen başvuru yok.',
+          name: 'AskiService',
+        );
+        return null;
+      }
+
+      final applications =
+          applicationsSnapshot.docs.map((doc) {
+            return ApplicationModel.fromMap(doc.id, doc.data());
+          }).toList();
+
+      // Rastgele bir başvuru seç
+      final random = Random();
+      final selectedApplication =
+          applications[random.nextInt(applications.length)];
+
+      // Seçilen başvuruyu kabul et ve diğerlerini reddet
+      await _firestore.runTransaction((transaction) async {
+        // Seçilen başvuruyu güncelle
+        transaction.update(
+          _firestore
+              .collection('askis')
+              .doc(askiId)
+              .collection('applications')
+              .doc(selectedApplication.id),
+          {'status': ApplicationStatus.accepted.name},
+        );
+
+        // Diğer başvuruları reddet
+        for (var app in applications) {
+          if (app.id != selectedApplication.id) {
+            transaction.update(
+              _firestore
+                  .collection('askis')
+                  .doc(askiId)
+                  .collection('applications')
+                  .doc(app.id),
+              {'status': ApplicationStatus.rejected.name},
+            );
+          }
+        }
+
+        // Askının durumunu güncelle
+        transaction.update(_firestore.collection('askis').doc(askiId), {
+          'status': AskiStatus.taken.name, // Status set to taken (won)
+          'takenByUserId': selectedApplication.applicantUserId,
+          'takenByUserName': selectedApplication.applicantUserName,
+          'takenAt': DateTime.now().millisecondsSinceEpoch,
+        });
+      });
+
+      // Kazanan bireysel kullanıcıya bildirim gönder
+      final aski = await getAski(askiId); // Askı detaylarını al
+      if (aski != null) {
+        await _notificationService.createNotification(
+          userId: selectedApplication.applicantUserId,
+          title: NotificationType.askiWon.displayName,
+          message:
+              'Tebrikler! ${aski.productName} adlı askıyı kazandınız. Ürünü almak için QR kodu oluşturun.',
+          type: NotificationType.askiWon,
+          relatedPostId: aski.id,
+          data: {
+            'askiId': aski.id,
+            'productName': aski.productName,
+            'corporateName': aski.corporateName,
+            'corporateId': aski.corporateId,
+            'applicantUserId': selectedApplication.applicantUserId,
+          },
+        );
+        developer.log(
+          'Kazanan bildirim gönderildi: ${selectedApplication.applicantUserName}',
+          name: 'AskiService',
+        );
+      }
+
+      developer.log(
+        'Rastgele başvuru seçildi: ${selectedApplication.applicantUserName}',
+        name: 'AskiService',
+      );
+      return selectedApplication;
+    } catch (e) {
+      developer.log('Rastgele başvuru seçme hatası: $e', name: 'AskiService');
+      return null;
+    }
+  }
+
   // Kategoriye göre askıları getirme
   Stream<List<AskiModel>> getAskisByCategory(String category) {
     return _firestore
@@ -262,6 +493,7 @@ class AskiService {
       int active = 0;
       int taken = 0;
       int cancelled = 0;
+      int completed = 0; // Yeni eklendi
 
       for (var doc in querySnapshot.docs) {
         final status = doc.data()['status'];
@@ -275,6 +507,9 @@ class AskiService {
           case 'cancelled':
             cancelled++;
             break;
+          case 'completed': // Yeni eklendi
+            completed++;
+            break;
         }
       }
 
@@ -283,10 +518,17 @@ class AskiService {
         'active': active,
         'taken': taken,
         'cancelled': cancelled,
+        'completed': completed, // Yeni eklendi
       };
     } catch (e) {
       developer.log('İstatistik alma hatası: $e', name: 'AskiService');
-      return {'total': 0, 'active': 0, 'taken': 0, 'cancelled': 0};
+      return {
+        'total': 0,
+        'active': 0,
+        'taken': 0,
+        'cancelled': 0,
+        'completed': 0,
+      };
     }
   }
 
@@ -300,10 +542,8 @@ class AskiService {
       if (userModel == null) throw Exception('Kullanıcı bilgisi bulunamadı');
 
       await _firestore.collection('askis').doc(askiId).update({
-        'status': AskiStatus.taken.name,
-        'takenByUserId': userModel.uid,
-        'takenByUserName': userModel.fullName,
-        'takenAt': DateTime.now().millisecondsSinceEpoch,
+        'status':
+            AskiStatus.completed.name, // Status set to completed (delivered)
       });
 
       developer.log('Askı tamamlandı: $askiId', name: 'AskiService');

@@ -8,6 +8,8 @@ enum NotificationType {
   newMessage,
   adminNotification,
   productClaimed,
+  askiWon, // Yeni eklendi
+  askiTaken, // Yeni eklendi
   other,
 }
 
@@ -28,6 +30,10 @@ extension NotificationTypeExtension on NotificationType {
         return 'Yönetici Bildirimi';
       case NotificationType.productClaimed:
         return 'Ürün Teslim Alındı';
+      case NotificationType.askiWon:
+        return 'Askı Kazandınız!';
+      case NotificationType.askiTaken:
+        return 'Askı Alındı'; // Yeni eklendi
       case NotificationType.other:
         return 'Bildirim';
     }
@@ -49,6 +55,10 @@ extension NotificationTypeExtension on NotificationType {
         return 'Yönetici tarafından bir bildirim gönderildi';
       case NotificationType.productClaimed:
         return 'Ürününüz teslim alındı';
+      case NotificationType.askiWon:
+        return 'Başvurduğunuz askıyı kazandınız!';
+      case NotificationType.askiTaken:
+        return 'Askınız bir kullanıcı tarafından teslim alındı!'; // Yeni eklendi
       case NotificationType.other:
         return 'Genel bildirim';
     }
