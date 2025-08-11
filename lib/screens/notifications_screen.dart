@@ -169,7 +169,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       case NotificationType.newMessage:
       case NotificationType.adminNotification:
       case NotificationType.productClaimed:
-      case NotificationType.askiTaken: // Handle new case
+      case NotificationType.askiTaken:
+      case NotificationType.productDelivered: // Handle new case
       case NotificationType.other:
         if (notification.relatedPostId != null) {
           _navigateToPost(notification.relatedPostId!);
@@ -355,6 +356,10 @@ class _NotificationTile extends StatelessWidget {
       case NotificationType.askiTaken:
         icon = Icons.check_circle_outline; // Checkmark icon
         color = Colors.teal; // A distinct color
+        break;
+      case NotificationType.productDelivered:
+        icon = Icons.check_box; // Delivered icon
+        color = Colors.lightGreen; // Delivered color
         break;
       default:
         icon = Icons.info; // Default icon

@@ -3,9 +3,11 @@ import 'dart:convert';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../services/user_service.dart';
 import '../services/aski_service.dart';
+import '../services/notification_service.dart';
 import '../models/user_model.dart';
 import '../models/aski_model.dart';
 import 'dart:developer' as developer;
+import 'package:askida/models/notification_model.dart'; // NotificationModel eklendi
 
 class QRValidatorScreen extends StatefulWidget {
   const QRValidatorScreen({super.key});
@@ -17,6 +19,7 @@ class QRValidatorScreen extends StatefulWidget {
 class _QRValidatorScreenState extends State<QRValidatorScreen> {
   final UserService _userService = UserService();
   final AskiService _askiService = AskiService();
+  // final NotificationService _notificationService = NotificationService(); // NotificationService örneği
   MobileScannerController cameraController = MobileScannerController();
   UserModel? _currentUser;
   bool _isProcessing = false;
@@ -212,6 +215,27 @@ class _QRValidatorScreenState extends State<QRValidatorScreen> {
                   setState(() {
                     _validationMessage = 'Askı başarıyla tamamlandı!';
                   });
+                  // Send notification to the winner (takenByUserId)
+                  if (aski.takenByUserId != null) {
+                    final NotificationService notificationService =
+                        NotificationService();
+                    await notificationService.createNotification(
+                      userId: aski.takenByUserId!,
+                      title: NotificationType.productDelivered.displayName,
+                      message: NotificationType.productDelivered.description,
+                      type: NotificationType.productDelivered,
+                      relatedPostId: aski.id,
+                      data: {
+                        'askiId': aski.id,
+                        'productName': aski.productName,
+                        'corporateName': aski.corporateName,
+                      },
+                    );
+                    developer.log(
+                      'Product delivered notification sent for askiId: ${aski.id} to userId: ${aski.takenByUserId}',
+                      name: 'QRValidatorScreen',
+                    );
+                  }
                   // Optionally navigate to a success screen or home
                 } catch (e) {
                   setState(() {

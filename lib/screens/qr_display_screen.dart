@@ -3,6 +3,10 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'dart:convert';
 import 'dart:async';
 import 'package:askida/models/aski_model.dart'; // AskiModel eklendi
+import 'package:askida/services/notification_service.dart'; // NotificationService eklendi
+import 'package:firebase_auth/firebase_auth.dart'; // FirebaseAuth eklendi
+import 'package:askida/models/notification_model.dart'; // NotificationModel eklendi
+import 'dart:developer' as developer; // Geliştirici araçları için
 
 class QRDisplayScreen extends StatefulWidget {
   final String askiId;
@@ -26,16 +30,67 @@ class QRDisplayScreen extends StatefulWidget {
 
 class _QRDisplayScreenState extends State<QRDisplayScreen> {
   StreamSubscription<AskiModel?>? _askiSubscription;
+  StreamSubscription<List<NotificationModel>>?
+  _notificationSubscription; // Yeni eklendi
+  final NotificationService _notificationService =
+      NotificationService(); // Yeni eklendi
 
   @override
   void initState() {
     super.initState();
     // _listenForAskiStatus(); // Askı durumunu dinlemeyi kaldır
+    _listenForProductDeliveredNotification(); // Yeni eklendi
+  }
+
+  void _listenForProductDeliveredNotification() {
+    final currentUserUid = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUserUid == null) return;
+
+    _notificationSubscription = _notificationService
+        .getUserNotificationsStream(userId: currentUserUid, includeRead: true)
+        .listen((notifications) {
+          developer.log(
+            'QRDisplayScreen: Received ${notifications.length} notifications.',
+            name: 'QRDisplayScreen',
+          );
+          for (var notification in notifications) {
+            developer.log(
+              'QRDisplayScreen: Processing notification - Type: ${notification.type}, RelatedPostId: ${notification.relatedPostId}, IsRead: ${notification.isRead}',
+              name: 'QRDisplayScreen',
+            );
+            if (notification.type == NotificationType.productDelivered &&
+                notification.relatedPostId == widget.askiId) {
+              developer.log(
+                'QRDisplayScreen: Product delivered notification matched for askiId: ${widget.askiId}',
+                name: 'QRDisplayScreen',
+              );
+              // Ürün teslim edildi bildirimi alındı
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(notification.message),
+                    backgroundColor: Colors.green,
+                    duration: const Duration(seconds: 3),
+                  ),
+                );
+                _notificationService.markAsRead(notification.id);
+                // Geri sayfaya at
+                Future.delayed(const Duration(seconds: 3), () {
+                  if (mounted && Navigator.canPop(context)) {
+                    Navigator.pop(context);
+                  }
+                });
+              }
+              break; // Sadece ilgili bildirimi işle
+            }
+          }
+        });
   }
 
   @override
   void dispose() {
     _askiSubscription?.cancel(); // Aboneliği iptal et
+    _notificationSubscription?.cancel(); // Aboneliği iptal et
     super.dispose();
   }
 

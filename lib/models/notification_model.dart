@@ -10,6 +10,7 @@ enum NotificationType {
   productClaimed,
   askiWon, // Yeni eklendi
   askiTaken, // Yeni eklendi
+  productDelivered, // Yeni eklendi
   other,
 }
 
@@ -34,6 +35,8 @@ extension NotificationTypeExtension on NotificationType {
         return 'Askı Kazandınız!';
       case NotificationType.askiTaken:
         return 'Askı Alındı'; // Yeni eklendi
+      case NotificationType.productDelivered:
+        return 'Ürün Teslim Edildi'; // Yeni eklendi
       case NotificationType.other:
         return 'Bildirim';
     }
@@ -56,9 +59,11 @@ extension NotificationTypeExtension on NotificationType {
       case NotificationType.productClaimed:
         return 'Ürününüz teslim alındı';
       case NotificationType.askiWon:
-        return 'Başvurduğunuz askıyı kazandınız!';
+        return 'Kazandığınız ürünü teslim alınız.'; // Updated message
       case NotificationType.askiTaken:
-        return 'Askınız bir kullanıcı tarafından teslim alındı!'; // Yeni eklendi
+        return 'Askınız bir kullanıcı tarafından teslim alındı!';
+      case NotificationType.productDelivered:
+        return 'Ürünü teslim aldınız.'; // Updated message
       case NotificationType.other:
         return 'Genel bildirim';
     }
