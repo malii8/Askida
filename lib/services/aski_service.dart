@@ -552,4 +552,24 @@ class AskiService {
       rethrow;
     }
   }
+
+  // Askıyı geri alma (kazanan vazgeçerse veya teslimat gerçekleşmezse)
+  Future<bool> revertAskiStatus(String askiId) async {
+    try {
+      await _firestore.collection('askis').doc(askiId).update({
+        'status': AskiStatus.active.name,
+        'takenByUserId': FieldValue.delete(),
+        'takenByUserName': FieldValue.delete(),
+        'takenAt': FieldValue.delete(),
+      });
+      developer.log(
+        'Askı durumu aktif olarak geri alındı: $askiId',
+        name: 'AskiService',
+      );
+      return true;
+    } catch (e) {
+      developer.log('Askı durumu geri alınırken hata: $e', name: 'AskiService');
+      return false;
+    }
+  }
 }

@@ -111,6 +111,14 @@ class _QRValidatorScreenState extends State<QRValidatorScreen> {
             _isProcessing = false;
           });
           cameraController.stop();
+        } else if (aski.status == AskiStatus.active) {
+          // Specific message for active askis scanned by corporate
+          setState(() {
+            _validationMessage =
+                'Bu QR kodu aktif bir askıya ait. Kurumsal kullanıcılar sadece kazanılmış askıların teslimatını onaylayabilir.';
+            _isProcessing = false;
+          });
+          cameraController.stop();
         } else {
           setState(() {
             _validationMessage =
@@ -209,6 +217,10 @@ class _QRValidatorScreenState extends State<QRValidatorScreen> {
             TextButton(
               child: const Text('Onayla'),
               onPressed: () async {
+                developer.log(
+                  'QRValidatorScreen: Onayla button pressed. Calling completeAski.',
+                  name: 'QRValidatorScreen',
+                );
                 Navigator.of(context).pop();
                 try {
                   await _askiService.completeAski(aski.id);

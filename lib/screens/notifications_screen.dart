@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/notification_model.dart';
 import '../services/notification_service.dart';
 import '../services/post_service.dart';
+import '../services/aski_service.dart'; // Import AskiService
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -13,6 +14,7 @@ class NotificationsScreen extends StatefulWidget {
 class _NotificationsScreenState extends State<NotificationsScreen> {
   final NotificationService _notificationService = NotificationService();
   final PostService _postService = PostService();
+  final AskiService _askiService = AskiService(); // Yeni eklendi
   late Stream<List<NotificationModel>> _notificationsStream;
 
   @override
@@ -154,7 +156,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
   }
 
-  void _onNotificationTap(NotificationModel notification) async {
+  Future<void> _onNotificationTap(NotificationModel notification) async {
     // Bildirimi okundu olarak işaretle
     if (!notification.isRead) {
       _markAsRead(notification.id);
@@ -180,6 +182,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         if (notification.relatedPostId != null && notification.data != null) {
           // QRDisplayScreen'e yönlendir
           final askiId = notification.relatedPostId!;
+          final aski = await _askiService.getAski(askiId); // Fetch aski
+          if (aski == null) {
+            _showError('Askı bulunamadı.');
+            return;
+          }
           final productName = notification.data!['productName'] as String;
           final corporateName = notification.data!['corporateName'] as String;
           final corporateId = notification.data!['corporateId'] as String;
@@ -195,6 +202,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 'corporateName': corporateName,
                 'corporateId': corporateId,
                 'applicantUserId': applicantUserId,
+                'postType': aski.postType.name, // Pass postType
               },
             );
           }
@@ -226,6 +234,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
         );
       }
+    }
+  }
+
+  void _showError(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), backgroundColor: Colors.red),
+      );
     }
   }
 }

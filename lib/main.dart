@@ -19,6 +19,7 @@ import 'screens/qr_validator_screen.dart';
 import 'screens/qr_display_screen.dart';
 import 'services/user_service.dart';
 import 'models/user_model.dart';
+import 'package:askida/models/aski_model.dart'; // PostType için eklendi
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -150,6 +151,9 @@ class MainApp extends StatelessWidget {
                     corporateId: args['corporateId'] as String,
                     applicantUserId:
                         args['applicantUserId'] as String?, // Yeni eklendi
+                    postType: PostType.values.firstWhere(
+                      (e) => e.name == args['postType'],
+                    ), // Convert string to PostType
                   ),
             );
           }
