@@ -191,20 +191,37 @@ class _QRValidatorScreenState extends State<QRValidatorScreen> {
       barrierDismissible: false, // User must tap button!
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Askı Tamamlama'),
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          title: Text(
+            'Askı Tamamlama',
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+          ),
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
                 Text(
                   '${aski.productName} adlı askıyı ${aski.takenByUserId == _currentUser!.uid ? 'siz' : aski.takenByUserName} teslim alacak.',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                 ),
-                const Text('Bu işlemi onaylıyor musunuz?'),
+                Text(
+                  'Bu işlemi onaylıyor musunuz?',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
               ],
             ),
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('İptal'),
+              child: Text(
+                'İptal',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
               onPressed: () {
                 Navigator.of(context).pop();
                 setState(() {
@@ -215,7 +232,10 @@ class _QRValidatorScreenState extends State<QRValidatorScreen> {
               },
             ),
             TextButton(
-              child: const Text('Onayla'),
+              child: Text(
+                'Onayla',
+                style: TextStyle(color: Theme.of(context).colorScheme.primary),
+              ),
               onPressed: () async {
                 developer.log(
                   'QRValidatorScreen: Onayla button pressed. Calling completeAski.',
@@ -273,12 +293,15 @@ class _QRValidatorScreenState extends State<QRValidatorScreen> {
       appBar: AppBar(
         title: const Text('QR Kod Doğrulama'),
         backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Colors.white,
+        foregroundColor: Theme.of(context).colorScheme.onPrimary,
       ),
       body:
           _currentUser?.userType != UserType.corporate
-              ? const Center(
-                child: Text('Bu sayfa sadece kurumsal kullanıcılar içindir.'),
+              ? Center(
+                child: Text(
+                  'Bu sayfa sadece kurumsal kullanıcılar içindir.',
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
               )
               : Column(
                 children: [
@@ -286,18 +309,30 @@ class _QRValidatorScreenState extends State<QRValidatorScreen> {
                     padding: const EdgeInsets.all(16),
                     margin: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.blue.shade50,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withAlpha((255 * 0.1).round()),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.blue.shade200),
+                      border: Border.all(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.primary.withAlpha((255 * 0.3).round()),
+                      ),
                     ),
-                    child: const Row(
+                    child: Row(
                       children: [
-                        Icon(Icons.info, color: Colors.blue),
-                        SizedBox(width: 12),
+                        Icon(
+                          Icons.info,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: Text(
                             'Askıdan alınacak ürünün QR kodunu okutun.',
-                            style: TextStyle(fontSize: 16),
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
                           ),
                         ),
                       ],
@@ -308,20 +343,29 @@ class _QRValidatorScreenState extends State<QRValidatorScreen> {
                       padding: const EdgeInsets.all(16),
                       margin: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
-                        color: Colors.red.shade50,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.error.withAlpha((255 * 0.1).round()),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.red.shade200),
+                        border: Border.all(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.error.withAlpha((255 * 0.3).round()),
+                        ),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.error, color: Colors.red),
+                          Icon(
+                            Icons.error,
+                            color: Theme.of(context).colorScheme.error,
+                          ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               _validationMessage!,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 16,
-                                color: Colors.red,
+                                color: Theme.of(context).colorScheme.error,
                               ),
                             ),
                           ),
@@ -331,13 +375,24 @@ class _QRValidatorScreenState extends State<QRValidatorScreen> {
                   Expanded(
                     child:
                         _isProcessing
-                            ? const Center(
+                            ? Center(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  CircularProgressIndicator(),
-                                  SizedBox(height: 16),
-                                  Text('QR kod işleniyor...'),
+                                  CircularProgressIndicator(
+                                    color:
+                                        Theme.of(context).colorScheme.primary,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'QR kod işleniyor...',
+                                    style: TextStyle(
+                                      color:
+                                          Theme.of(
+                                            context,
+                                          ).colorScheme.onSurface,
+                                    ),
+                                  ),
                                 ],
                               ),
                             )
@@ -361,18 +416,30 @@ class _QRValidatorScreenState extends State<QRValidatorScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.error, size: 64, color: Colors.red),
-                  SizedBox(height: 16),
+                  Icon(
+                    Icons.error,
+                    size: 64,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                  const SizedBox(height: 16),
                   Text(
                     'Kamera başlatılamadı: ${error.toString()}',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.red, fontSize: 16),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                      fontSize: 16,
+                    ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
                     'Lütfen uygulama izinlerini kontrol edin veya cihazınızı yeniden başlatın.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 14),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.7).round()),
+                    ),
                   ),
                 ],
               ),

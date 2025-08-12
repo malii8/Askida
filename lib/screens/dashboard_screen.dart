@@ -101,13 +101,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.error, size: 64, color: Colors.red),
+                          Icon(
+                            Icons.error,
+                            size: 64,
+                            color: Theme.of(context).colorScheme.error,
+                          ),
                           const SizedBox(height: 16),
-                          Text('Hata: ${snapshot.error}'),
+                          Text(
+                            'Hata: ${snapshot.error}',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                          ),
                           const SizedBox(height: 16),
                           ElevatedButton(
                             onPressed: () => setState(() {}),
-                            child: const Text('Tekrar Dene'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.primary,
+                            ),
+                            child: Text(
+                              'Tekrar Dene',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onPrimary,
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -153,7 +171,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         }
 
         if (snapshot.hasError || snapshot.data == null) {
-          return const Center(child: Text('Kullanıcı bilgileri yüklenemedi'));
+          return Center(
+            child: Text(
+              'Kullanıcı bilgileri yüklenemedi',
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          );
         }
 
         _currentUser = snapshot.data;
@@ -172,13 +195,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
           end: Alignment.bottomRight,
           colors: [
             Theme.of(context).colorScheme.primary,
-            Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
+            Theme.of(
+              context,
+            ).colorScheme.primary.withAlpha((255 * 0.8).round()),
           ],
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+            color: Theme.of(
+              context,
+            ).colorScheme.primary.withAlpha((255 * 0.3).round()),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -193,7 +220,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 width: 60,
                 height: 60,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onPrimary.withAlpha((255 * 0.2).round()),
                   borderRadius: BorderRadius.circular(30),
                 ),
                 child: Center(
@@ -201,8 +230,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     _currentUser!.fullName.isNotEmpty
                         ? _currentUser!.fullName[0].toUpperCase()
                         : 'U',
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onPrimary,
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
@@ -214,15 +243,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Hoş geldin!',
-                      style: TextStyle(color: Colors.white70, fontSize: 16),
+                      style: TextStyle(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onPrimary.withAlpha((255 * 0.7).round()),
+                        fontSize: 16,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       _currentUser!.fullName,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onPrimary,
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                       ),
@@ -236,18 +270,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
+              color: Theme.of(
+                context,
+              ).colorScheme.onPrimary.withAlpha((255 * 0.15).round()),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               children: [
-                const Icon(Icons.favorite, color: Colors.white, size: 24),
+                Icon(
+                  Icons.favorite,
+                  color: Theme.of(context).colorScheme.onPrimary,
+                  size: 24,
+                ),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Text(
                     'Paylaşım zincirinin bir parçasısın!',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onPrimary,
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
                     ),
@@ -267,34 +307,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
         'title': 'Toplam Askım',
         'value': _statistics['toplam'] ?? 0,
         'icon': Icons.local_offer,
-        'color': Colors.blue,
+        'color': Theme.of(context).colorScheme.primary,
       },
       {
         'title': 'Aktif Askılar',
         'value': _statistics['aktif'] ?? 0,
         'icon': Icons.check_circle,
-        'color': Colors.green,
+        'color': Theme.of(context).colorScheme.tertiary,
       },
       {
         'title': 'Alınan Askılar',
         'value': _statistics['alinan'] ?? 0,
         'icon': Icons.shopping_bag,
-        'color': Colors.orange,
+        'color': Theme.of(context).colorScheme.secondary,
       },
       {
         'title': 'Süresi Dolanlar',
         'value': _statistics['suresi_dolan'] ?? 0,
         'icon': Icons.schedule,
-        'color': Colors.red,
+        'color': Theme.of(context).colorScheme.error,
       },
     ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'İstatistikler',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
         ),
         const SizedBox(height: 16),
         GridView.builder(
@@ -312,16 +356,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
             return Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.grey.withValues(alpha: 0.1),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.shadow.withAlpha((255 * 0.1).round()),
                     blurRadius: 10,
                     offset: const Offset(0, 5),
                   ),
                 ],
-                border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
+                border: Border.all(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.outline.withAlpha((255 * 0.1).round()),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -350,7 +400,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade700,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.7).round()),
                     ),
                   ),
                 ],
@@ -371,16 +423,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               'Son Askıların',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
             if (_userAskis.isNotEmpty)
               TextButton(
                 onPressed: () {
                   Navigator.pushNamed(context, '/profile');
                 },
-                child: const Text('Tümünü Gör'),
+                child: Text(
+                  'Tümünü Gör',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
               ),
           ],
         ),
@@ -390,16 +451,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
             width: double.infinity,
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: Colors.grey.shade50,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey.shade200),
+              border: Border.all(color: Theme.of(context).colorScheme.outline),
             ),
             child: Column(
               children: [
                 Icon(
                   Icons.local_offer_outlined,
                   size: 64,
-                  color: Colors.grey.shade400,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withAlpha((255 * 0.4).round()),
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -407,25 +470,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade600,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'İlk askını oluştur ve paylaşım zincirini başlat!',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey.shade500),
+                  style: TextStyle(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withAlpha((255 * 0.5).round()),
+                  ),
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton.icon(
                   onPressed: () {
                     Navigator.pushNamed(context, '/createPost');
                   },
-                  icon: const Icon(Icons.add),
-                  label: const Text('İlk Askıyı Oluştur'),
+                  icon: Icon(
+                    Icons.add,
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                  label: Text(
+                    'İlk Askıyı Oluştur',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: Colors.white,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
                   ),
                 ),
               ],
@@ -442,11 +519,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.grey.withValues(alpha: 0.1),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.shadow.withAlpha((255 * 0.1).round()),
                       blurRadius: 8,
                       offset: const Offset(0, 4),
                     ),
@@ -460,7 +539,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       decoration: BoxDecoration(
                         color: _getStatusColor(
                           aski.status,
-                        ).withValues(alpha: 0.1),
+                        ).withAlpha((255 * 0.1).round()),
                         borderRadius: BorderRadius.circular(25),
                       ),
                       child: Icon(
@@ -476,9 +555,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         children: [
                           Text(
                             aski.productName,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
+                              color: Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -496,7 +576,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Text(
                       _formatDate(aski.createdAt),
                       style: TextStyle(
-                        color: Colors.grey.shade500,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withAlpha((255 * 0.5).round()),
                         fontSize: 12,
                       ),
                     ),
@@ -512,15 +594,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Color _getStatusColor(AskiStatus status) {
     switch (status) {
       case AskiStatus.active:
-        return Colors.green;
+        return Theme.of(context).colorScheme.tertiary;
       case AskiStatus.taken:
-        return Colors.blue;
+        return Theme.of(context).colorScheme.secondary;
       case AskiStatus.expired:
-        return Colors.orange;
+        return Theme.of(context).colorScheme.error;
       case AskiStatus.cancelled:
-        return Colors.red;
+        return Theme.of(context).colorScheme.error;
       case AskiStatus.completed:
-        return Colors.purple; // Choose an appropriate color
+        return Theme.of(
+          context,
+        ).colorScheme.primary; // Choose an appropriate color
     }
   }
 

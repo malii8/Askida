@@ -72,7 +72,12 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
           }
 
           if (snapshot.hasError) {
-            return Center(child: Text('Hata: ${snapshot.error}'));
+            return Center(
+              child: Text(
+                'Hata: ${snapshot.error}',
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            );
           }
 
           final products = snapshot.data ?? [];
@@ -95,29 +100,43 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
           Icon(
             Icons.inventory_2_outlined,
             size: 120,
-            color: Colors.grey.shade400,
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withAlpha((255 * 0.4).round()),
           ),
           const SizedBox(height: 24),
           Text(
             'Henüz ürün eklenmemiş',
-            style: Theme.of(
-              context,
-            ).textTheme.headlineSmall?.copyWith(color: Colors.grey.shade600),
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
+            ),
           ),
           const SizedBox(height: 16),
           Text(
             'Bireysel kullanıcıların askıya bırakabileceği\nürünlerinizi buraya ekleyin',
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 32),
           ElevatedButton.icon(
             onPressed: () => _showProductDialog(),
-            icon: const Icon(Icons.add),
-            label: const Text('İlk Ürünü Ekle'),
+            icon: Icon(
+              Icons.add,
+              color: Theme.of(context).colorScheme.onPrimary,
+            ),
+            label: Text(
+              'İlk Ürünü Ekle',
+              style: TextStyle(color: Theme.of(context).colorScheme.onPrimary),
+            ),
             style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Theme.of(context).colorScheme.onPrimary,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             ),
           ),
@@ -135,18 +154,22 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
           elevation: 2,
+          color: Theme.of(context).colorScheme.surface,
           child: ListTile(
             leading: CircleAvatar(
               backgroundColor: Theme.of(context).colorScheme.primary,
               child: Icon(
                 _getCategoryIcon(product.category),
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onPrimary,
                 size: 20,
               ),
             ),
             title: Text(
               product.name,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -161,9 +184,9 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
                 if (product.price != null)
                   Text(
                     '₺ ${product.price!.toStringAsFixed(2)}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Colors.green,
+                      color: Theme.of(context).colorScheme.tertiary,
                       fontSize: 14,
                     ),
                   ),
@@ -172,26 +195,47 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
                     product.description,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                    style: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
+                      fontSize: 12,
+                    ),
                   ),
               ],
             ),
             trailing: PopupMenuButton(
               itemBuilder:
                   (context) => [
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'edit',
                       child: ListTile(
-                        leading: Icon(Icons.edit),
-                        title: Text('Düzenle'),
+                        leading: Icon(
+                          Icons.edit,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                        title: Text(
+                          'Düzenle',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
                         contentPadding: EdgeInsets.zero,
                       ),
                     ),
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'delete',
                       child: ListTile(
-                        leading: Icon(Icons.delete, color: Colors.red),
-                        title: Text('Sil', style: TextStyle(color: Colors.red)),
+                        leading: Icon(
+                          Icons.delete,
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                        title: Text(
+                          'Sil',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                        ),
                         contentPadding: EdgeInsets.zero,
                       ),
                     ),
@@ -203,6 +247,12 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
                   _deleteProduct(product.id);
                 }
               },
+              icon: Icon(
+                Icons.more_vert,
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
+              ),
             ),
           ),
         );
@@ -230,6 +280,7 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
           (context) => StatefulBuilder(
             builder:
                 (context, setDialogState) => AlertDialog(
+                  backgroundColor: Theme.of(context).colorScheme.surface,
                   title: Row(
                     children: [
                       Icon(
@@ -239,7 +290,10 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
                       const SizedBox(width: 8),
                       Text(
                         product == null ? 'Yeni Ürün Ekle' : 'Ürünü Düzenle',
-                        style: const TextStyle(fontSize: 18),
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
                       ),
                     ],
                   ),
@@ -251,22 +305,30 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.blue.shade50,
+                            color: Theme.of(context).colorScheme.primary
+                                .withAlpha((255 * 0.1).round()),
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.blue.shade200),
+                            border: Border.all(
+                              color: Theme.of(context).colorScheme.primary
+                                  .withAlpha((255 * 0.3).round()),
+                            ),
                           ),
                           child: Row(
                             children: [
                               Icon(
                                 Icons.info,
-                                color: Colors.blue.shade700,
+                                color: Theme.of(context).colorScheme.primary,
                                 size: 20,
                               ),
                               const SizedBox(width: 8),
-                              const Expanded(
+                              Expanded(
                                 child: Text(
                                   'Mağazanıza yeni ürün ekleyin',
-                                  style: TextStyle(fontSize: 12),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
+                                  ),
                                 ),
                               ),
                             ],
@@ -277,11 +339,26 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
                         // Ürün Adı
                         TextField(
                           controller: nameController,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             labelText: 'Ürün Adı *',
                             hintText: 'Ürün adını girin',
-                            prefixIcon: Icon(Icons.inventory),
-                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(
+                              Icons.inventory,
+                              color: Theme.of(context).colorScheme.onSurface
+                                  .withAlpha((255 * 0.6).round()),
+                            ),
+                            border: const OutlineInputBorder(),
+                            labelStyle: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface
+                                  .withAlpha((255 * 0.7).round()),
+                            ),
+                            hintStyle: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface
+                                  .withAlpha((255 * 0.5).round()),
+                            ),
+                          ),
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -289,10 +366,18 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
                         // Kategori
                         DropdownButtonFormField<String>(
                           value: selectedCategory,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             labelText: 'Kategori *',
-                            prefixIcon: Icon(Icons.category),
-                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(
+                              Icons.category,
+                              color: Theme.of(context).colorScheme.onSurface
+                                  .withAlpha((255 * 0.6).round()),
+                            ),
+                            border: const OutlineInputBorder(),
+                            labelStyle: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface
+                                  .withAlpha((255 * 0.7).round()),
+                            ),
                           ),
                           items:
                               categories.map((category) {
@@ -303,9 +388,21 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
                                       Icon(
                                         _getCategoryIcon(category),
                                         size: 20,
+                                        color:
+                                            Theme.of(
+                                              context,
+                                            ).colorScheme.onSurface,
                                       ),
                                       const SizedBox(width: 8),
-                                      Text(category),
+                                      Text(
+                                        category,
+                                        style: TextStyle(
+                                          color:
+                                              Theme.of(
+                                                context,
+                                              ).colorScheme.onSurface,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 );
@@ -315,6 +412,10 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
                               selectedCategory = value!;
                             });
                           },
+                          dropdownColor: Theme.of(context).colorScheme.surface,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
                         ),
                         const SizedBox(height: 16),
 
@@ -322,12 +423,27 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
                         TextField(
                           controller: priceController,
                           keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             labelText: 'Fiyat (₺) *',
                             hintText: '250',
-                            prefixIcon: Icon(Icons.attach_money),
+                            prefixIcon: Icon(
+                              Icons.attach_money,
+                              color: Theme.of(context).colorScheme.onSurface
+                                  .withAlpha((255 * 0.6).round()),
+                            ),
                             prefixText: '₺ ',
-                            border: OutlineInputBorder(),
+                            border: const OutlineInputBorder(),
+                            labelStyle: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface
+                                  .withAlpha((255 * 0.7).round()),
+                            ),
+                            hintStyle: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface
+                                  .withAlpha((255 * 0.5).round()),
+                            ),
+                          ),
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -336,11 +452,26 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
                         TextField(
                           controller: descriptionController,
                           maxLines: 3,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             labelText: 'Açıklama *',
                             hintText: 'Ürün hakkında detaylar...',
-                            prefixIcon: Icon(Icons.description),
-                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(
+                              Icons.description,
+                              color: Theme.of(context).colorScheme.onSurface
+                                  .withAlpha((255 * 0.6).round()),
+                            ),
+                            border: const OutlineInputBorder(),
+                            labelStyle: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface
+                                  .withAlpha((255 * 0.7).round()),
+                            ),
+                            hintStyle: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface
+                                  .withAlpha((255 * 0.5).round()),
+                            ),
+                          ),
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -348,11 +479,26 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
                         // Resim URL
                         TextField(
                           controller: imageUrlController,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             labelText: 'Ürün Resmi URL (Opsiyonel)',
                             hintText: 'https://example.com/image.jpg',
-                            prefixIcon: Icon(Icons.image),
-                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(
+                              Icons.image,
+                              color: Theme.of(context).colorScheme.onSurface
+                                  .withAlpha((255 * 0.6).round()),
+                            ),
+                            border: const OutlineInputBorder(),
+                            labelStyle: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface
+                                  .withAlpha((255 * 0.7).round()),
+                            ),
+                            hintStyle: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface
+                                  .withAlpha((255 * 0.5).round()),
+                            ),
+                          ),
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -361,10 +507,11 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.grey.shade50,
+                            color:
+                                Theme.of(context).colorScheme.surfaceContainer,
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Column(
+                          child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
@@ -372,34 +519,55 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
                                   Icon(
                                     Icons.info_outline,
                                     size: 16,
-                                    color: Colors.blue,
+                                    color:
+                                        Theme.of(context).colorScheme.primary,
                                   ),
-                                  SizedBox(width: 4),
+                                  const SizedBox(width: 4),
                                   Text(
                                     'Bilgi',
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 12,
+                                      color:
+                                          Theme.of(
+                                            context,
+                                          ).colorScheme.onSurface,
                                     ),
                                   ),
                                 ],
                               ),
-                              SizedBox(height: 4),
+                              const SizedBox(height: 4),
                               Text(
                                 '• Eklediğiniz ürünler mağaza sayfasında görünecek',
-                                style: TextStyle(fontSize: 11),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Theme.of(context).colorScheme.onSurface
+                                      .withAlpha((255 * 0.8).round()),
+                                ),
                               ),
                               Text(
                                 '• Kullanıcılar bu ürünleri askıya alabilecek',
-                                style: TextStyle(fontSize: 11),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Theme.of(context).colorScheme.onSurface
+                                      .withAlpha((255 * 0.8).round()),
+                                ),
                               ),
                               Text(
                                 '• Fiyat sadece referans amaçlıdır',
-                                style: TextStyle(fontSize: 11),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Theme.of(context).colorScheme.onSurface
+                                      .withAlpha((255 * 0.8).round()),
+                                ),
                               ),
                               Text(
                                 '• Ürünleri sonradan düzenleyebilirsiniz',
-                                style: TextStyle(fontSize: 11),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Theme.of(context).colorScheme.onSurface
+                                      .withAlpha((255 * 0.8).round()),
+                                ),
                               ),
                             ],
                           ),
@@ -410,12 +578,22 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('İptal'),
+                      child: Text(
+                        'İptal',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
                     ),
                     ElevatedButton(
                       onPressed: () async {
-                        final navigator = Navigator.of(context);
-                        final messenger = ScaffoldMessenger.of(context);
+                        final currentContext = context; // Capture context
+                        final navigator = Navigator.of(currentContext);
+                        final messenger = ScaffoldMessenger.of(currentContext);
+                        final colorScheme =
+                            Theme.of(
+                              currentContext,
+                            ).colorScheme; // Define colorScheme here
                         bool success = false;
 
                         if (nameController.text.trim().isNotEmpty &&
@@ -426,9 +604,11 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
                           );
                           if (price == null) {
                             messenger.showSnackBar(
-                              const SnackBar(
-                                content: Text('Lütfen geçerli bir fiyat girin'),
-                                backgroundColor: Colors.red,
+                              SnackBar(
+                                content: const Text(
+                                  'Lütfen geçerli bir fiyat girin',
+                                ),
+                                backgroundColor: colorScheme.error,
                               ),
                             );
                             return;
@@ -478,33 +658,44 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
                                 SnackBar(
                                   content: Row(
                                     children: [
-                                      const Icon(
+                                      Icon(
                                         Icons.check_circle,
-                                        color: Colors.white,
+                                        color: colorScheme.onPrimary,
                                       ),
                                       const SizedBox(width: 8),
                                       Text(
                                         product == null
                                             ? 'Ürün başarıyla eklendi!'
                                             : 'Ürün başarıyla güncellendi!',
+                                        style: TextStyle(
+                                          color: colorScheme.onPrimary,
+                                        ),
                                       ),
                                     ],
                                   ),
-                                  backgroundColor: Colors.green,
+                                  backgroundColor: colorScheme.tertiary,
                                   behavior: SnackBarBehavior.floating,
                                 ),
                               );
                             } else {
                               messenger.showSnackBar(
-                                const SnackBar(
+                                SnackBar(
                                   content: Row(
                                     children: [
-                                      Icon(Icons.error, color: Colors.white),
-                                      SizedBox(width: 8),
-                                      Text('Bir hata oluştu!'),
+                                      Icon(
+                                        Icons.error,
+                                        color: colorScheme.onError,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Bir hata oluştu!',
+                                        style: TextStyle(
+                                          color: colorScheme.onError,
+                                        ),
+                                      ),
                                     ],
                                   ),
-                                  backgroundColor: Colors.red,
+                                  backgroundColor: colorScheme.error,
                                   behavior: SnackBarBehavior.floating,
                                 ),
                               );
@@ -512,23 +703,35 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
                           }
                         } else {
                           messenger.showSnackBar(
-                            const SnackBar(
-                              content: Text('Lütfen gerekli alanları doldurun'),
-                              backgroundColor: Colors.orange,
+                            SnackBar(
+                              content: const Text(
+                                'Lütfen gerekli alanları doldurun',
+                              ),
+                              backgroundColor: colorScheme.secondary,
                             ),
                           );
                         }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor: Colors.white,
+                        foregroundColor:
+                            Theme.of(context).colorScheme.onPrimary,
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.save, size: 18),
+                          Icon(
+                            Icons.save,
+                            size: 18,
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          ),
                           const SizedBox(width: 4),
-                          Text(product == null ? 'Ürünü Kaydet' : 'Güncelle'),
+                          Text(
+                            product == null ? 'Ürünü Kaydet' : 'Güncelle',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onPrimary,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -543,18 +746,34 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text('Ürünü Sil'),
-            content: const Text('Bu ürünü silmek istediğinizden emin misiniz?'),
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            title: Text(
+              'Ürünü Sil',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+            ),
+            content: Text(
+              'Bu ürünü silmek istediğinizden emin misiniz?',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('İptal'),
+                child: Text(
+                  'İptal',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
               ),
               ElevatedButton(
                 onPressed: () async {
-                  // BuildContext'i async işlemden önce al
-                  final navigator = Navigator.of(context);
-                  final messenger = ScaffoldMessenger.of(context);
+                  final currentContext = context; // Capture context
+                  final navigator = Navigator.of(currentContext);
+                  final messenger = ScaffoldMessenger.of(currentContext);
+                  final colorScheme =
+                      Theme.of(
+                        currentContext,
+                      ).colorScheme; // Define colorScheme here
 
                   final success = await _productService.deleteProduct(
                     productId,
@@ -565,22 +784,30 @@ class _CorporateProductsScreenState extends State<CorporateProductsScreen> {
 
                   if (success) {
                     messenger.showSnackBar(
-                      const SnackBar(
-                        content: Text('Ürün başarıyla silindi!'),
-                        backgroundColor: Colors.red,
+                      SnackBar(
+                        content: const Text('Ürün başarıyla silindi!'),
+                        backgroundColor: colorScheme.tertiary,
                       ),
                     );
                   } else {
                     messenger.showSnackBar(
-                      const SnackBar(
-                        content: Text('Silme işlemi başarısız!'),
-                        backgroundColor: Colors.red,
+                      SnackBar(
+                        content: const Text('Silme işlemi başarısız!'),
+                        backgroundColor: colorScheme.error,
                       ),
                     );
                   }
                 },
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                child: const Text('Sil'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.error,
+                  foregroundColor: Theme.of(context).colorScheme.onError,
+                ),
+                child: Text(
+                  'Sil',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onError,
+                  ),
+                ),
               ),
             ],
           ),

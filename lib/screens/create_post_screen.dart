@@ -151,7 +151,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 Text('Askı başarıyla oluşturuldu!'),
               ],
             ),
-            backgroundColor: Colors.green,
+            backgroundColor: Theme.of(context).colorScheme.tertiary,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -175,7 +175,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(message),
-          backgroundColor: Colors.red,
+          backgroundColor: Theme.of(context).colorScheme.error,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -212,7 +212,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       appBar: AppBar(
         title: const Text('Askı Oluştur'),
         backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Colors.white,
+        foregroundColor: Theme.of(context).colorScheme.onPrimary,
         elevation: 0,
       ),
       body: Column(
@@ -261,17 +261,26 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         color:
             isActive
                 ? Theme.of(context).colorScheme.primary
-                : Colors.grey.shade300,
+                : Theme.of(context).colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Center(
         child:
             isCompleted
-                ? const Icon(Icons.check, color: Colors.white, size: 20)
+                ? Icon(
+                  Icons.check,
+                  color: Theme.of(context).colorScheme.onPrimary,
+                  size: 20,
+                )
                 : Text(
                   '${step + 1}',
                   style: TextStyle(
-                    color: isActive ? Colors.white : Colors.grey.shade600,
+                    color:
+                        isActive
+                            ? Theme.of(context).colorScheme.onPrimary
+                            : Theme.of(context).colorScheme.onSurface.withAlpha(
+                              (255 * 0.6).round(),
+                            ),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -288,7 +297,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         color:
             isCompleted
                 ? Theme.of(context).colorScheme.primary
-                : Colors.grey.shade300,
+                : Theme.of(context).colorScheme.surfaceContainerHigh,
       ),
     );
   }
@@ -299,14 +308,23 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Kurum Seçin',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             'Askınızı hangi kuruma bağışlamak istiyorsunuz?',
-            style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+            style: TextStyle(
+              fontSize: 16,
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
+            ),
           ),
           const SizedBox(height: 24),
           Expanded(
@@ -321,14 +339,16 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                           Icon(
                             Icons.business_outlined,
                             size: 80,
-                            color: Colors.grey.shade400,
+                            color: Theme.of(context).colorScheme.onSurface
+                                .withAlpha((255 * 0.4).round()),
                           ),
                           const SizedBox(height: 16),
                           Text(
                             'Henüz onaylanmış kurum yok',
                             style: TextStyle(
                               fontSize: 18,
-                              color: Colors.grey.shade600,
+                              color: Theme.of(context).colorScheme.onSurface
+                                  .withAlpha((255 * 0.6).round()),
                             ),
                           ),
                         ],
@@ -356,21 +376,24 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                                 color:
                                     isSelected
                                         ? Theme.of(context).colorScheme.primary
-                                            .withValues(alpha: 0.1)
-                                        : Colors.white,
+                                            .withAlpha((255 * 0.1).round())
+                                        : Theme.of(context).colorScheme.surface,
                                 border: Border.all(
                                   color:
                                       isSelected
                                           ? Theme.of(
                                             context,
                                           ).colorScheme.primary
-                                          : Colors.grey.shade300,
+                                          : Theme.of(
+                                            context,
+                                          ).colorScheme.outline,
                                   width: isSelected ? 2 : 1,
                                 ),
                                 borderRadius: BorderRadius.circular(12),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.grey.withValues(alpha: 0.1),
+                                    color: Theme.of(context).colorScheme.shadow
+                                        .withAlpha((255 * 0.1).round()),
                                     blurRadius: 5,
                                     offset: const Offset(0, 2),
                                   ),
@@ -394,8 +417,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                                                 .toUpperCase()
                                             : corporate.fullName[0]
                                                 .toUpperCase(),
-                                        style: const TextStyle(
-                                          color: Colors.white,
+                                        style: TextStyle(
+                                          color:
+                                              Theme.of(
+                                                context,
+                                              ).colorScheme.onPrimary,
                                           fontWeight: FontWeight.bold,
                                           fontSize: 18,
                                         ),
@@ -411,16 +437,23 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                                         Text(
                                           corporate.companyName ??
                                               corporate.fullName,
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontWeight: FontWeight.bold,
                                             fontSize: 16,
+                                            color:
+                                                Theme.of(
+                                                  context,
+                                                ).colorScheme.onSurface,
                                           ),
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
                                           corporate.email,
                                           style: TextStyle(
-                                            color: Colors.grey.shade600,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSurface
+                                                .withAlpha((255 * 0.6).round()),
                                             fontSize: 14,
                                           ),
                                         ),
@@ -453,14 +486,23 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Kategori Seçin',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             'Hangi kategoriden ürün bağışlamak istiyorsunuz?',
-            style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+            style: TextStyle(
+              fontSize: 16,
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
+            ),
           ),
           const SizedBox(height: 24),
           Expanded(
@@ -475,14 +517,16 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                           Icon(
                             Icons.category_outlined,
                             size: 80,
-                            color: Colors.grey.shade400,
+                            color: Theme.of(context).colorScheme.onSurface
+                                .withAlpha((255 * 0.4).round()),
                           ),
                           const SizedBox(height: 16),
                           Text(
                             'Bu kurumda henüz ürün yok',
                             style: TextStyle(
                               fontSize: 18,
-                              color: Colors.grey.shade600,
+                              color: Theme.of(context).colorScheme.onSurface
+                                  .withAlpha((255 * 0.6).round()),
                             ),
                           ),
                         ],
@@ -514,19 +558,20 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                               color:
                                   isSelected
                                       ? Theme.of(context).colorScheme.primary
-                                          .withValues(alpha: 0.1)
-                                      : Colors.white,
+                                          .withAlpha((255 * 0.1).round())
+                                      : Theme.of(context).colorScheme.surface,
                               border: Border.all(
                                 color:
                                     isSelected
                                         ? Theme.of(context).colorScheme.primary
-                                        : Colors.grey.shade300,
+                                        : Theme.of(context).colorScheme.outline,
                                 width: isSelected ? 2 : 1,
                               ),
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.grey.withValues(alpha: 0.1),
+                                  color: Theme.of(context).colorScheme.shadow
+                                      .withAlpha((255 * 0.1).round()),
                                   blurRadius: 5,
                                   offset: const Offset(0, 2),
                                 ),
@@ -543,7 +588,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                                           ? Theme.of(
                                             context,
                                           ).colorScheme.primary
-                                          : Colors.grey.shade600,
+                                          : Theme.of(context)
+                                              .colorScheme
+                                              .onSurface
+                                              .withAlpha((255 * 0.6).round()),
                                 ),
                                 const SizedBox(height: 12),
                                 Text(
@@ -556,7 +604,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                                             ? Theme.of(
                                               context,
                                             ).colorScheme.primary
-                                            : Colors.grey.shade800,
+                                            : Theme.of(
+                                              context,
+                                            ).colorScheme.onSurface,
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
@@ -578,14 +628,23 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Ürün Seçin',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             'Hangi ürünü askıya asmak istiyorsunuz?',
-            style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+            style: TextStyle(
+              fontSize: 16,
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
+            ),
           ),
           const SizedBox(height: 24),
           Expanded(
@@ -600,14 +659,16 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                           Icon(
                             Icons.inventory_outlined,
                             size: 80,
-                            color: Colors.grey.shade400,
+                            color: Theme.of(context).colorScheme.onSurface
+                                .withAlpha((255 * 0.4).round()),
                           ),
                           const SizedBox(height: 16),
                           Text(
                             'Bu kategoride ürün yok',
                             style: TextStyle(
                               fontSize: 18,
-                              color: Colors.grey.shade600,
+                              color: Theme.of(context).colorScheme.onSurface
+                                  .withAlpha((255 * 0.6).round()),
                             ),
                           ),
                         ],
@@ -634,21 +695,24 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                                 color:
                                     isSelected
                                         ? Theme.of(context).colorScheme.primary
-                                            .withValues(alpha: 0.1)
-                                        : Colors.white,
+                                            .withAlpha((255 * 0.1).round())
+                                        : Theme.of(context).colorScheme.surface,
                                 border: Border.all(
                                   color:
                                       isSelected
                                           ? Theme.of(
                                             context,
                                           ).colorScheme.primary
-                                          : Colors.grey.shade300,
+                                          : Theme.of(
+                                            context,
+                                          ).colorScheme.outline,
                                   width: isSelected ? 2 : 1,
                                 ),
                                 borderRadius: BorderRadius.circular(12),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.grey.withValues(alpha: 0.1),
+                                    color: Theme.of(context).colorScheme.shadow
+                                        .withAlpha((255 * 0.1).round()),
                                     blurRadius: 5,
                                     offset: const Offset(0, 2),
                                   ),
@@ -656,18 +720,42 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                               ),
                               child: Row(
                                 children: [
+                                  // Display product image or placeholder
                                   Container(
                                     width: 60,
                                     height: 60,
                                     decoration: BoxDecoration(
-                                      color: Colors.blue.shade50,
+                                      color:
+                                          Theme.of(
+                                            context,
+                                          ).colorScheme.surfaceContainer,
                                       borderRadius: BorderRadius.circular(12),
+                                      image:
+                                          product.imageUrl != null &&
+                                                  product.imageUrl!.isNotEmpty
+                                              ? DecorationImage(
+                                                image: NetworkImage(
+                                                  product.imageUrl!,
+                                                ),
+                                                fit: BoxFit.cover,
+                                              )
+                                              : null,
                                     ),
-                                    child: Icon(
-                                      Icons.inventory,
-                                      color: Colors.blue.shade600,
-                                      size: 30,
-                                    ),
+                                    child:
+                                        product.imageUrl == null ||
+                                                product.imageUrl!.isEmpty
+                                            ? Icon(
+                                              _getCategoryIcon(
+                                                product.category,
+                                              ), // Use category icon as placeholder
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.onSurface.withAlpha(
+                                                (255 * 0.6).round(),
+                                              ),
+                                              size: 30,
+                                            )
+                                            : null,
                                   ),
                                   const SizedBox(width: 16),
                                   Expanded(
@@ -677,9 +765,13 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                                       children: [
                                         Text(
                                           product.name,
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontWeight: FontWeight.bold,
                                             fontSize: 16,
+                                            color:
+                                                Theme.of(
+                                                  context,
+                                                ).colorScheme.onSurface,
                                           ),
                                         ),
                                         if (product.description.isNotEmpty) ...[
@@ -687,7 +779,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                                           Text(
                                             product.description,
                                             style: TextStyle(
-                                              color: Colors.grey.shade600,
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.onSurface.withAlpha(
+                                                (255 * 0.6).round(),
+                                              ),
                                               fontSize: 14,
                                             ),
                                             maxLines: 2,
@@ -723,14 +819,23 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Askı Detayları',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             'Son olarak askınız için bir mesaj ekleyin.',
-            style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+            style: TextStyle(
+              fontSize: 16,
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
+            ),
           ),
           const SizedBox(height: 24),
 
@@ -738,29 +843,51 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.blue.shade50,
+              color: Theme.of(
+                context,
+              ).colorScheme.primary.withAlpha((255 * 0.1).round()),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.blue.shade200),
+              border: Border.all(
+                color: Theme.of(
+                  context,
+                ).colorScheme.primary.withAlpha((255 * 0.3).round()),
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Askı Özeti',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                 ),
                 const SizedBox(height: 12),
-                _buildSummaryRow(
-                  'Kurum',
-                  _selectedCorporate?.companyName ??
+                // Corporate Image and Name
+                _buildSummaryImageRow(
+                  label: 'Kurum',
+                  name:
+                      _selectedCorporate?.companyName ??
                       _selectedCorporate?.fullName ??
                       '',
+                  imageUrl: _selectedCorporate?.profileImageUrl,
+                  isCorporate: true,
                 ),
-                _buildSummaryRow(
-                  'Kategori',
-                  _getCategoryName(_selectedCategory),
+                // Category Icon and Name
+                _buildSummaryIconRow(
+                  label: 'Kategori',
+                  name: _getCategoryName(_selectedCategory),
+                  icon: _getCategoryIcon(_selectedCategory),
                 ),
-                _buildSummaryRow('Ürün', _selectedProduct?.name ?? ''),
+                // Product Image and Name
+                _buildSummaryImageRow(
+                  label: 'Ürün',
+                  name: _selectedProduct?.name ?? '',
+                  imageUrl: _selectedProduct?.imageUrl,
+                  isProduct: true,
+                ),
               ],
             ),
           ),
@@ -768,9 +895,13 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
           const SizedBox(height: 24),
 
           // Gönderi Tipi Seçimi
-          const Text(
+          Text(
             'Gönderi Tipi:',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
           const SizedBox(height: 8),
           DropdownButtonFormField<PostType>(
@@ -780,17 +911,27 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 borderRadius: BorderRadius.circular(12),
               ),
               filled: true,
-              fillColor: Colors.grey.shade50,
+              fillColor: Theme.of(context).colorScheme.surfaceContainer,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 12,
                 vertical: 8,
+              ),
+              labelStyle: TextStyle(
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withAlpha((255 * 0.7).round()),
               ),
             ),
             items:
                 PostType.values.map((type) {
                   return DropdownMenuItem(
                     value: type,
-                    child: Text(type.displayName),
+                    child: Text(
+                      type.displayName,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
                   );
                 }).toList(),
             onChanged: (value) {
@@ -798,6 +939,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 _selectedPostType = value!;
               });
             },
+            dropdownColor: Theme.of(context).colorScheme.surface,
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
           ),
 
           const SizedBox(height: 24),
@@ -813,7 +956,107 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 borderRadius: BorderRadius.circular(12),
               ),
               filled: true,
-              fillColor: Colors.grey.shade50,
+              fillColor: Theme.of(context).colorScheme.surfaceContainer,
+              labelStyle: TextStyle(
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withAlpha((255 * 0.7).round()),
+              ),
+              hintStyle: TextStyle(
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withAlpha((255 * 0.5).round()),
+              ),
+            ),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryImageRow({
+    required String label,
+    required String name,
+    String? imageUrl,
+    bool isCorporate = false,
+    bool isProduct = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(
+              '$label:',
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
+              ),
+            ),
+          ),
+          if (imageUrl != null && imageUrl.isNotEmpty)
+            Container(
+              width: 40,
+              height: 40,
+              margin: const EdgeInsets.only(right: 8),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(
+                  isCorporate ? 20 : 8,
+                ), // Circular for corporate, square for product
+                image: DecorationImage(
+                  image: NetworkImage(imageUrl),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            )
+          else if (isCorporate)
+            Container(
+              width: 40,
+              height: 40,
+              margin: const EdgeInsets.only(right: 8),
+              decoration: BoxDecoration(
+                color: Theme.of(
+                  context,
+                ).colorScheme.primary.withAlpha((255 * 0.1).round()),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Icon(
+                Icons.business,
+                color: Theme.of(context).colorScheme.primary,
+                size: 24,
+              ),
+            )
+          else if (isProduct)
+            Container(
+              width: 40,
+              height: 40,
+              margin: const EdgeInsets.only(right: 8),
+              decoration: BoxDecoration(
+                color: Theme.of(
+                  context,
+                ).colorScheme.primary.withAlpha((255 * 0.1).round()),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                Icons.inventory_2_outlined,
+                color: Theme.of(context).colorScheme.primary,
+                size: 24,
+              ),
+            )
+          else
+            const SizedBox(width: 48), // Placeholder for alignment
+          Expanded(
+            child: Text(
+              name,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
           ),
         ],
@@ -821,26 +1064,51 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     );
   }
 
-  Widget _buildSummaryRow(String label, String value) {
+  Widget _buildSummaryIconRow({
+    required String label,
+    required String name,
+    required IconData icon,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(
             width: 80,
             child: Text(
               '$label:',
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w500,
-                color: Colors.grey,
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
               ),
+            ),
+          ),
+          Container(
+            width: 40,
+            height: 40,
+            margin: const EdgeInsets.only(right: 8),
+            decoration: BoxDecoration(
+              color: Theme.of(
+                context,
+              ).colorScheme.primary.withAlpha((255 * 0.1).round()),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Icon(
+              icon,
+              color: Theme.of(context).colorScheme.primary,
+              size: 24,
             ),
           ),
           Expanded(
             child: Text(
-              value,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              name,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
           ),
         ],
@@ -852,10 +1120,12 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.2),
+            color: Theme.of(
+              context,
+            ).colorScheme.shadow.withAlpha((255 * 0.2).round()),
             blurRadius: 10,
             offset: const Offset(0, -5),
           ),
@@ -872,6 +1142,10 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
+                  side: BorderSide(
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
+                  foregroundColor: Theme.of(context).colorScheme.onSurface,
                 ),
                 child: const Text('Geri'),
               ),
@@ -882,7 +1156,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               onPressed: _isLoading ? null : _getNextButtonAction(),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.primary,
-                foregroundColor: Colors.white,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -890,15 +1164,20 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               ),
               child:
                   _isLoading
-                      ? const SizedBox(
+                      ? SizedBox(
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.onPrimary,
                           strokeWidth: 2,
                         ),
                       )
-                      : Text(_getNextButtonText()),
+                      : Text(
+                        _getNextButtonText(),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                        ),
+                      ),
             ),
           ),
         ],
@@ -960,6 +1239,9 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
       case 'kişisel bakım':
       case 'personal care':
         return Icons.face;
+      case 'içecek':
+      case 'beverage':
+        return Icons.local_cafe; // Added icon for beverage
       default:
         return Icons.category;
     }

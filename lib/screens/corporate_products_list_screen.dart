@@ -48,8 +48,10 @@ class _CorporateProductsListScreenState
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+        color: Theme.of(context).colorScheme.surface,
+        border: Border(
+          bottom: BorderSide(color: Theme.of(context).colorScheme.outline),
+        ),
       ),
       child: Column(
         children: [
@@ -61,23 +63,38 @@ class _CorporateProductsListScreenState
 
               return DropdownButtonFormField<String>(
                 value: _selectedCorporateId,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Kurum Seçin',
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(
+                  labelStyle: TextStyle(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withAlpha((255 * 0.7).round()),
+                  ),
+                  border: const OutlineInputBorder(),
+                  contentPadding: const EdgeInsets.symmetric(
                     horizontal: 12,
                     vertical: 8,
                   ),
                 ),
                 items: [
-                  const DropdownMenuItem<String>(
+                  DropdownMenuItem<String>(
                     value: null,
-                    child: Text('Tüm Kurumlar'),
+                    child: Text(
+                      'Tüm Kurumlar',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
                   ),
                   ...corporates.map((corporate) {
                     return DropdownMenuItem<String>(
                       value: corporate['id'],
-                      child: Text(corporate['name']!),
+                      child: Text(
+                        corporate['name']!,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
                     );
                   }),
                 ],
@@ -86,6 +103,10 @@ class _CorporateProductsListScreenState
                     _selectedCorporateId = value;
                   });
                 },
+                dropdownColor: Theme.of(context).colorScheme.surface,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
               );
             },
           ),
@@ -95,20 +116,38 @@ class _CorporateProductsListScreenState
           // Kategori seçimi
           DropdownButtonFormField<String>(
             value: _selectedCategory,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Kategori',
-              border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              labelStyle: TextStyle(
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withAlpha((255 * 0.7).round()),
+              ),
+              border: const OutlineInputBorder(),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 8,
+              ),
             ),
             items: [
-              const DropdownMenuItem<String>(
+              DropdownMenuItem<String>(
                 value: 'Tümü',
-                child: Text('Tüm Kategoriler'),
+                child: Text(
+                  'Tüm Kategoriler',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
               ),
               ..._productService.getCategories().map((category) {
                 return DropdownMenuItem<String>(
                   value: category,
-                  child: Text(category),
+                  child: Text(
+                    category,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
                 );
               }),
             ],
@@ -117,6 +156,8 @@ class _CorporateProductsListScreenState
                 _selectedCategory = value ?? 'Tümü';
               });
             },
+            dropdownColor: Theme.of(context).colorScheme.surface,
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
           ),
         ],
       ),
@@ -139,9 +180,16 @@ class _CorporateProductsListScreenState
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.error, size: 64, color: Colors.red),
+                Icon(
+                  Icons.error,
+                  size: 64,
+                  color: Theme.of(context).colorScheme.error,
+                ),
                 const SizedBox(height: 16),
-                Text('Hata: ${snapshot.error}'),
+                Text(
+                  'Hata: ${snapshot.error}',
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
               ],
             ),
           );
@@ -158,20 +206,35 @@ class _CorporateProductsListScreenState
         }
 
         if (products.isEmpty) {
-          return const Center(
+          return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.inventory_2_outlined, size: 80, color: Colors.grey),
-                SizedBox(height: 16),
+                Icon(
+                  Icons.inventory_2_outlined,
+                  size: 80,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withAlpha((255 * 0.3).round()),
+                ),
+                const SizedBox(height: 16),
                 Text(
                   'Ürün bulunamadı',
-                  style: TextStyle(fontSize: 18, color: Colors.grey),
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
+                  ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Text(
                   'Seçili kriterlere uygun ürün bulunmuyor',
-                  style: TextStyle(color: Colors.grey),
+                  style: TextStyle(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withAlpha((255 * 0.5).round()),
+                  ),
                 ),
               ],
             ),
@@ -194,6 +257,7 @@ class _CorporateProductsListScreenState
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
+      color: Theme.of(context).colorScheme.surface,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -205,8 +269,8 @@ class _CorporateProductsListScreenState
                   backgroundColor: Theme.of(context).colorScheme.primary,
                   child: Text(
                     product.name[0].toUpperCase(),
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onPrimary,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -218,15 +282,17 @@ class _CorporateProductsListScreenState
                     children: [
                       Text(
                         product.name,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       Text(
                         product.corporateName,
                         style: TextStyle(
-                          color: Colors.grey.shade600,
+                          color: Theme.of(context).colorScheme.onSurface
+                              .withAlpha((255 * 0.6).round()),
                           fontSize: 14,
                         ),
                       ),
@@ -258,7 +324,12 @@ class _CorporateProductsListScreenState
               const SizedBox(height: 12),
               Text(
                 product.description,
-                style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
+                style: TextStyle(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withAlpha((255 * 0.7).round()),
+                  fontSize: 14,
+                ),
               ),
             ],
 
@@ -269,11 +340,19 @@ class _CorporateProductsListScreenState
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () => _showCreateAskiDialog(product),
-                icon: const Icon(Icons.add_circle_outline),
-                label: const Text('Askıya Bırak'),
+                icon: Icon(
+                  Icons.add_circle_outline,
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
+                label: Text(
+                  'Askıya Bırak',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Colors.white,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
               ),
@@ -291,39 +370,77 @@ class _CorporateProductsListScreenState
       context: context,
       builder:
           (context) => AlertDialog(
-            title: Text('${product.name} - Askıya Bırak'),
+            title: Text(
+              '${product.name} - Askıya Bırak',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+            ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Kurum: ${product.corporateName}'),
-                Text('Kategori: ${product.category}'),
+                Text(
+                  'Kurum: ${product.corporateName}',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+                Text(
+                  'Kategori: ${product.category}',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: messageController,
                   maxLines: 3,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Mesaj (Opsiyonel)',
                     hintText: 'Bu ürünü neden askıya bırakıyorsunuz?',
-                    border: OutlineInputBorder(),
+                    labelStyle: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.7).round()),
+                    ),
+                    hintStyle: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.5).round()),
+                    ),
+                    border: const OutlineInputBorder(),
+                  ),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 16),
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withAlpha((255 * 0.1).round()),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.blue.shade200),
+                    border: Border.all(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withAlpha((255 * 0.3).round()),
+                    ),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Icon(Icons.info_outline, color: Colors.blue),
-                      SizedBox(width: 8),
+                      Icon(
+                        Icons.info_outline,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'Askıya bıraktığınız ürün için size bir QR kod oluşturulacak. Bu QR kodu firmaya göstererek ürünü alabilirsiniz.',
-                          style: TextStyle(fontSize: 12),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
                         ),
                       ),
                     ],
@@ -334,13 +451,21 @@ class _CorporateProductsListScreenState
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('İptal'),
+                child: Text(
+                  'İptal',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
               ),
               ElevatedButton(
                 onPressed: () async {
-                  // BuildContext'i async işlemden önce al
-                  final navigator = Navigator.of(context);
-                  final messenger = ScaffoldMessenger.of(context);
+                  final currentContext = context; // Capture context
+                  final navigator = Navigator.of(currentContext);
+                  final messenger = ScaffoldMessenger.of(currentContext);
+
+                  // Capture ColorScheme before async operation
+                  final colorScheme = Theme.of(currentContext).colorScheme;
 
                   final askiId = await _askiService.createAski(
                     product,
@@ -357,17 +482,23 @@ class _CorporateProductsListScreenState
                   if (askiId != null) {
                     messenger.showSnackBar(
                       SnackBar(
-                        content: const Row(
+                        content: Row(
                           children: [
-                            Icon(Icons.check_circle, color: Colors.white),
-                            SizedBox(width: 8),
-                            Text('Askı başarıyla oluşturuldu!'),
+                            Icon(
+                              Icons.check_circle,
+                              color: colorScheme.onPrimary,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Askı başarıyla oluşturuldu!',
+                              style: TextStyle(color: colorScheme.onPrimary),
+                            ),
                           ],
                         ),
-                        backgroundColor: Colors.green,
+                        backgroundColor: colorScheme.tertiary,
                         action: SnackBarAction(
                           label: 'QR Göster',
-                          textColor: Colors.white,
+                          textColor: colorScheme.onPrimary,
                           onPressed: () {
                             _showQRCode(askiId);
                           },
@@ -376,14 +507,22 @@ class _CorporateProductsListScreenState
                     );
                   } else {
                     messenger.showSnackBar(
-                      const SnackBar(
-                        content: Text('Askı oluşturulamadı!'),
-                        backgroundColor: Colors.red,
+                      SnackBar(
+                        content: Text(
+                          'Askı oluşturulamadı!',
+                          style: TextStyle(color: colorScheme.onError),
+                        ),
+                        backgroundColor: colorScheme.error,
                       ),
                     );
                   }
                 },
-                child: const Text('Askıya Bırak'),
+                child: Text(
+                  'Askıya Bırak',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                ),
               ),
             ],
           ),
@@ -395,7 +534,10 @@ class _CorporateProductsListScreenState
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text('QR Kod'),
+            title: Text(
+              'QR Kod',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+            ),
             content: SizedBox(
               width: 200,
               height: 200,
@@ -405,25 +547,36 @@ class _CorporateProductsListScreenState
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.qr_code,
                       size: 100,
-                      color: Colors.grey,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
                     ),
                   ),
                   const SizedBox(height: 16),
                   Text(
                     'Askı ID: $askiId',
-                    style: Theme.of(context).textTheme.bodySmall,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Bu QR kodu askıdan almak için kullanın.',
-                    style: TextStyle(fontSize: 12),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.7).round()),
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -432,7 +585,12 @@ class _CorporateProductsListScreenState
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Kapat'),
+                child: Text(
+                  'Kapat',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
               ),
             ],
           ),
@@ -442,28 +600,50 @@ class _CorporateProductsListScreenState
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text('QR Kod'),
+            title: Text(
+              'QR Kod',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+            ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
                   width: 200,
                   height: 200,
-                  color: Colors.grey.shade200,
-                  child: const Center(child: Text('QR Kod\nBurada olacak')),
+                  color: Theme.of(context).colorScheme.surfaceContainer,
+                  child: Center(
+                    child: Text(
+                      'QR Kod\nBurada olacak',
+                      style: TextStyle(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
+                      ),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'Bu QR kodu firmaya göstererek ürününüzü alabilirsiniz.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 14),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withAlpha((255 * 0.7).round()),
+                  ),
                 ),
               ],
             ),
             actions: [
               ElevatedButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Tamam'),
+                child: Text(
+                  'Tamam',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                ),
               ),
             ],
           ),

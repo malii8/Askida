@@ -9,6 +9,8 @@ import '../models/notification_model.dart'; // NotificationModel eklendi
 import 'package:firebase_auth/firebase_auth.dart'; // FirebaseAuth eklendi
 import 'dart:developer' as developer; // Log için eklendi
 import '../models/application_model.dart'; // ApplicationModel eklendi
+import 'package:askida/models/product_model.dart'; // ProductModel için eklendi
+import 'package:askida/services/product_service.dart'; // ProductService için eklendi
 
 class FeedScreen extends StatefulWidget {
   const FeedScreen({super.key});
@@ -22,6 +24,7 @@ class _FeedScreenState extends State<FeedScreen> {
   final UserService _userService = UserService();
   final NotificationService _notificationService =
       NotificationService(); // NotificationService örneği
+  final ProductService _productService = ProductService(); // Yeni eklendi
   StreamSubscription<List<NotificationModel>>? _notificationSubscription;
 
   List<AskiModel> _askiList = [];
@@ -30,6 +33,7 @@ class _FeedScreenState extends State<FeedScreen> {
   bool _isLoading = true;
   String _selectedCategory = 'Tümü';
   AskiStatus? _selectedStatus;
+  List<String> _availableCategories = ['Tümü']; // Initialize with default
 
   @override
   void initState() {
@@ -45,6 +49,14 @@ class _FeedScreenState extends State<FeedScreen> {
       if (mounted) {
         setState(() {
           _currentUser = currentUser;
+        });
+      }
+
+      // Kategorileri yükle
+      final categories = await _productService.getAllCategories();
+      if (mounted) {
+        setState(() {
+          _availableCategories = categories;
         });
       }
 
@@ -121,11 +133,17 @@ class _FeedScreenState extends State<FeedScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(notification.message),
-        backgroundColor: Colors.blue,
+        backgroundColor:
+            Theme.of(
+              context,
+            ).colorScheme.primary, // Use primary color for notifications
         duration: const Duration(seconds: 5),
         action: SnackBarAction(
           label: 'Görüntüle',
-          textColor: Colors.white,
+          textColor:
+              Theme.of(context)
+                  .colorScheme
+                  .onPrimary, // Use onPrimary for text on primary background
           onPressed: () {
             // Always navigate to the notifications screen
             Navigator.of(context).pushNamed('/notifications');
@@ -140,7 +158,8 @@ class _FeedScreenState extends State<FeedScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.red,
+        backgroundColor:
+            Theme.of(context).colorScheme.error, // Use error color for errors
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -215,19 +234,7 @@ class _FeedScreenState extends State<FeedScreen> {
                       ),
                     ),
                     items:
-                        [
-                              'Tümü',
-                              'Ekmek',
-                              'Su',
-                              'Çorba',
-                              'Meyve',
-                              'Sebze',
-                              'Et',
-                              'Süt',
-                              'Giyim',
-                              'Ayakkabı',
-                              'Diğer',
-                            ]
+                        _availableCategories
                             .map(
                               (category) => DropdownMenuItem(
                                 value: category,
@@ -323,7 +330,7 @@ class _FeedScreenState extends State<FeedScreen> {
             Icon(
               Icons.local_offer_outlined,
               size: 80,
-              color: Colors.grey.shade400,
+              color: Theme.of(context).colorScheme.outline, // Use outline color
             ),
             const SizedBox(height: 24),
             Text(
@@ -331,14 +338,22 @@ class _FeedScreenState extends State<FeedScreen> {
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: Colors.grey.shade600,
+                color:
+                    Theme.of(
+                      context,
+                    ).colorScheme.onSurfaceVariant, // Use onSurfaceVariant
               ),
             ),
             const SizedBox(height: 12),
             Text(
               'İlk askıyı sen oluştur ve\npaylaşım zincirini başlat!',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, color: Colors.grey.shade500),
+              style: TextStyle(
+                fontSize: 16,
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurfaceVariant.withAlpha((255 * 0.7).round()),
+              ), // Use onSurfaceVariant with opacity
             ),
             const SizedBox(height: 32),
             ElevatedButton.icon(
@@ -349,7 +364,7 @@ class _FeedScreenState extends State<FeedScreen> {
               label: const Text('İlk Askıyı Oluştur'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.primary,
-                foregroundColor: Colors.white,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
                   vertical: 16,
@@ -389,7 +404,10 @@ class _FeedScreenState extends State<FeedScreen> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Colors.white, Colors.grey.shade50],
+            colors: [
+              Theme.of(context).colorScheme.surface,
+              Theme.of(context).colorScheme.surfaceContainerLowest,
+            ], // Use theme colors for gradient
           ),
         ),
         child: Padding(
@@ -400,34 +418,79 @@ class _FeedScreenState extends State<FeedScreen> {
               // Header - Kullanıcı bilgisi ve durum
               Row(
                 children: [
-                  Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary,
-                      borderRadius: BorderRadius.circular(25),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.primary.withValues(alpha: 0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
+                  FutureBuilder<UserModel?>(
+                    future: _userService.getUserById(
+                      aski.donorUserId,
+                    ), // Fetch donor user details
+                    builder: (context, snapshot) {
+                      String? profileImageUrl = snapshot.data?.profileImageUrl;
+                      String displayName =
+                          aski.donorUserName.isNotEmpty
+                              ? aski.donorUserName
+                              : 'Bilinmiyor';
+                      String initial =
+                          displayName.isNotEmpty
+                              ? displayName[0].toUpperCase()
+                              : '?';
+
+                      return Container(
+                        width: 50,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primary,
+                          borderRadius: BorderRadius.circular(25),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.primary.withAlpha(
+                                (255 * 0.3).round(),
+                              ), // Use withAlpha
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Text(
-                        aski.donorUserName.isNotEmpty
-                            ? aski.donorUserName[0].toUpperCase()
-                            : '?',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                        ),
-                      ),
-                    ),
+                        child:
+                            profileImageUrl != null &&
+                                    profileImageUrl.isNotEmpty
+                                ? ClipOval(
+                                  child: Image.network(
+                                    profileImageUrl,
+                                    fit: BoxFit.cover,
+                                    width: 50,
+                                    height: 50,
+                                    errorBuilder:
+                                        (context, error, stackTrace) => Center(
+                                          child: Text(
+                                            initial,
+                                            style: TextStyle(
+                                              color:
+                                                  Theme.of(
+                                                    context,
+                                                  ).colorScheme.onPrimary,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 20,
+                                            ),
+                                          ),
+                                        ),
+                                  ),
+                                )
+                                : Center(
+                                  child: Text(
+                                    initial,
+                                    style: TextStyle(
+                                      color:
+                                          Theme.of(
+                                            context,
+                                          ).colorScheme.onPrimary,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 20,
+                                    ),
+                                  ),
+                                ),
+                      );
+                    },
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -436,15 +499,19 @@ class _FeedScreenState extends State<FeedScreen> {
                       children: [
                         Text(
                           aski.donorUserName,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 18,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                         Text(
                           _formatDate(aski.createdAt),
                           style: TextStyle(
-                            color: Colors.grey.shade600,
+                            color:
+                                Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant, // Use onSurfaceVariant
                             fontSize: 14,
                           ),
                         ),
@@ -453,8 +520,8 @@ class _FeedScreenState extends State<FeedScreen> {
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
+                      horizontal: 10,
+                      vertical: 5,
                     ),
                     decoration: BoxDecoration(
                       color: _getStatusColor(aski.status),
@@ -462,85 +529,82 @@ class _FeedScreenState extends State<FeedScreen> {
                     ),
                     child: Text(
                       _getStatusText(aski.status),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
+                      style: TextStyle(
+                        color:
+                            Theme.of(
+                              context,
+                            ).colorScheme.onPrimary, // Text on status color
                         fontWeight: FontWeight.bold,
+                        fontSize: 12,
                       ),
                     ),
                   ),
                 ],
               ),
-
-              const SizedBox(height: 20),
-
+              const SizedBox(height: 16),
               // Ürün bilgisi
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.blue.shade200),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
+              FutureBuilder<ProductModel?>(
+                future: _productService.getProduct(
+                  aski.productId,
+                ), // Fetch product details
+                builder: (context, snapshot) {
+                  String? productImageUrl = snapshot.data?.imageUrl;
+                  return Row(
+                    children: [
+                      if (productImageUrl != null && productImageUrl.isNotEmpty)
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8.0),
+                          child: Image.network(
+                            productImageUrl,
+                            fit: BoxFit.cover,
+                            width: 60,
+                            height: 60,
+                            errorBuilder:
+                                (context, error, stackTrace) => Icon(
+                                  Icons.image,
+                                  color:
+                                      Theme.of(context).colorScheme.secondary,
+                                  size: 60,
+                                ),
+                          ),
+                        )
+                      else
                         Icon(
-                          Icons.local_offer,
-                          color: Colors.blue.shade700,
+                          Icons.bookmark,
+                          color: Theme.of(context).colorScheme.secondary,
                           size: 24,
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            aski.productName,
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blue.shade900,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (aski.message != null && aski.message!.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          aski.message!,
-                          style: TextStyle(
-                            color: Colors.grey.shade700,
-                            fontSize: 16,
-                            fontStyle: FontStyle.italic,
-                          ),
+                      const SizedBox(width: 8),
+                      Text(
+                        aski.productName,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                     ],
-                  ],
-                ),
+                  );
+                },
               ),
-
-              const SizedBox(height: 20),
-
-              // Alt kısım - QR kod bilgisi ve aksiyon butonu
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildAskiCardActions(aski), // Yeni metod çağrısı
+              if (aski.message != null && aski.message!.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0, left: 32.0),
+                  child: Text(
+                    aski.message!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontSize: 14,
+                    ), // Use onSurfaceVariant
                   ),
-                ],
-              ),
+                ),
+              const SizedBox(height: 16),
+              // Aksiyon butonu
+              _buildAskiCardActions(aski), // Yeni metod çağrısı
             ],
           ),
         ),
-      ), // Padding kapanışı
+      ),
     ); // Card kapanışı
   }
 
@@ -551,19 +615,31 @@ class _FeedScreenState extends State<FeedScreen> {
       return Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.grey.shade100,
+          color:
+              Theme.of(context)
+                  .colorScheme
+                  .surfaceContainerLowest, // Use surfaceContainerLowest
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey.shade300),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ), // Use outlineVariant
         ),
         child: Row(
           children: [
-            Icon(Icons.info_outline, color: Colors.grey.shade500, size: 20),
+            Icon(
+              Icons.info_outline,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              size: 20,
+            ), // Use onSurfaceVariant
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 _getStatusText(aski.status),
                 style: TextStyle(
-                  color: Colors.grey.shade600,
+                  color:
+                      Theme.of(
+                        context,
+                      ).colorScheme.onSurfaceVariant, // Use onSurfaceVariant
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
@@ -586,23 +662,34 @@ class _FeedScreenState extends State<FeedScreen> {
           child: Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.grey.shade50,
+              color:
+                  Theme.of(context)
+                      .colorScheme
+                      .surfaceContainerLowest, // Use surfaceContainerLowest
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey.shade200),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ), // Use outlineVariant
             ),
             child: Row(
               children: [
                 Icon(
                   Icons.qr_code_scanner,
-                  color: Colors.grey.shade600,
+                  color:
+                      Theme.of(
+                        context,
+                      ).colorScheme.onSurfaceVariant, // Use onSurfaceVariant
                   size: 20,
                 ),
                 const SizedBox(width: 8),
-                const Expanded(
+                Expanded(
                   child: Text(
                     'QR Okut (Teslimat Onayı)', // Changed text
                     style: TextStyle(
-                      color: Colors.grey,
+                      color:
+                          Theme.of(context)
+                              .colorScheme
+                              .onSurfaceVariant, // Use onSurfaceVariant
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
@@ -610,7 +697,10 @@ class _FeedScreenState extends State<FeedScreen> {
                 ),
                 Icon(
                   Icons.arrow_forward_ios,
-                  color: Colors.grey.shade600,
+                  color:
+                      Theme.of(
+                        context,
+                      ).colorScheme.onSurfaceVariant, // Use onSurfaceVariant
                   size: 16,
                 ),
               ],
@@ -625,19 +715,31 @@ class _FeedScreenState extends State<FeedScreen> {
           child: Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.red.shade50,
+              color:
+                  Theme.of(
+                    context,
+                  ).colorScheme.errorContainer, // Use errorContainer
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.red.shade200),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.error,
+              ), // Use error color
             ),
             child: Row(
               children: [
-                Icon(Icons.block, color: Colors.red.shade600, size: 20),
+                Icon(
+                  Icons.block,
+                  color: Theme.of(context).colorScheme.onErrorContainer,
+                  size: 20,
+                ), // Use onErrorContainer
                 const SizedBox(width: 8),
-                const Expanded(
+                Expanded(
                   child: Text(
                     'Kendi ürününüz',
                     style: TextStyle(
-                      color: Colors.red,
+                      color:
+                          Theme.of(context)
+                              .colorScheme
+                              .onErrorContainer, // Use onErrorContainer
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
@@ -655,23 +757,34 @@ class _FeedScreenState extends State<FeedScreen> {
           child: Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.green.shade50,
+              color:
+                  Theme.of(
+                    context,
+                  ).colorScheme.primaryContainer, // Use primaryContainer
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.green.shade200),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.primary,
+              ), // Use primary color
             ),
             child: Row(
               children: [
                 Icon(
                   Icons.shopping_cart,
-                  color: Colors.green.shade600,
+                  color:
+                      Theme.of(context)
+                          .colorScheme
+                          .onPrimaryContainer, // Use onPrimaryContainer
                   size: 20,
                 ),
                 const SizedBox(width: 8),
-                const Expanded(
+                Expanded(
                   child: Text(
                     'Askıyı Al', // Changed text
                     style: TextStyle(
-                      color: Colors.green,
+                      color:
+                          Theme.of(context)
+                              .colorScheme
+                              .onPrimaryContainer, // Use onPrimaryContainer
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
@@ -679,7 +792,10 @@ class _FeedScreenState extends State<FeedScreen> {
                 ),
                 Icon(
                   Icons.arrow_forward_ios,
-                  color: Colors.green.shade600,
+                  color:
+                      Theme.of(context)
+                          .colorScheme
+                          .onPrimaryContainer, // Use onPrimaryContainer
                   size: 16,
                 ),
               ],
@@ -698,19 +814,31 @@ class _FeedScreenState extends State<FeedScreen> {
           child: Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.blue.shade50,
+              color:
+                  Theme.of(
+                    context,
+                  ).colorScheme.secondaryContainer, // Use secondaryContainer
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.blue.shade200),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.secondary,
+              ), // Use secondary color
             ),
             child: Row(
               children: [
-                Icon(Icons.people_alt, color: Colors.blue.shade600, size: 20),
+                Icon(
+                  Icons.people_alt,
+                  color: Theme.of(context).colorScheme.onSecondaryContainer,
+                  size: 20,
+                ), // Use onSecondaryContainer
                 const SizedBox(width: 8),
-                const Expanded(
+                Expanded(
                   child: Text(
                     'Başvuruları Görüntüle',
                     style: TextStyle(
-                      color: Colors.blue,
+                      color:
+                          Theme.of(context)
+                              .colorScheme
+                              .onSecondaryContainer, // Use onSecondaryContainer
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
@@ -718,7 +846,10 @@ class _FeedScreenState extends State<FeedScreen> {
                 ),
                 Icon(
                   Icons.arrow_forward_ios,
-                  color: Colors.blue.shade600,
+                  color:
+                      Theme.of(context)
+                          .colorScheme
+                          .onSecondaryContainer, // Use onSecondaryContainer
                   size: 16,
                 ),
               ],
@@ -733,19 +864,31 @@ class _FeedScreenState extends State<FeedScreen> {
           child: Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.purple.shade50,
+              color:
+                  Theme.of(
+                    context,
+                  ).colorScheme.tertiaryContainer, // Use tertiaryContainer
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.purple.shade200),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.tertiary,
+              ), // Use tertiary color
             ),
             child: Row(
               children: [
-                Icon(Icons.how_to_reg, color: Colors.purple.shade600, size: 20),
+                Icon(
+                  Icons.how_to_reg,
+                  color: Theme.of(context).colorScheme.onTertiaryContainer,
+                  size: 20,
+                ), // Use onTertiaryContainer
                 const SizedBox(width: 8),
-                const Expanded(
+                Expanded(
                   child: Text(
                     'Başvur',
                     style: TextStyle(
-                      color: Colors.purple,
+                      color:
+                          Theme.of(context)
+                              .colorScheme
+                              .onTertiaryContainer, // Use onTertiaryContainer
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
@@ -753,7 +896,10 @@ class _FeedScreenState extends State<FeedScreen> {
                 ),
                 Icon(
                   Icons.arrow_forward_ios,
-                  color: Colors.purple.shade600,
+                  color:
+                      Theme.of(context)
+                          .colorScheme
+                          .onTertiaryContainer, // Use onTertiaryContainer
                   size: 16,
                 ),
               ],
@@ -768,19 +914,31 @@ class _FeedScreenState extends State<FeedScreen> {
           child: Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.grey.shade50,
+              color:
+                  Theme.of(context)
+                      .colorScheme
+                      .surfaceContainerLowest, // Use surfaceContainerLowest
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey.shade200),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ), // Use outlineVariant
             ),
             child: Row(
               children: [
-                Icon(Icons.info, color: Colors.grey.shade600, size: 20),
+                Icon(
+                  Icons.info,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  size: 20,
+                ), // Use onSurfaceVariant
                 const SizedBox(width: 8),
-                const Expanded(
+                Expanded(
                   child: Text(
                     'Kurumsal kullanıcılar başvuru yapamaz',
                     style: TextStyle(
-                      color: Colors.grey,
+                      color:
+                          Theme.of(context)
+                              .colorScheme
+                              .onSurfaceVariant, // Use onSurfaceVariant
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
@@ -804,18 +962,18 @@ class _FeedScreenState extends State<FeedScreen> {
     setState(() => _isLoading = true);
     try {
       final success = await _askiService.applyToAski(aski.id);
-      if (mounted) {
-        setState(() => _isLoading = false);
-        if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Askıya başarıyla başvurdunuz!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        } else {
-          _showError('Başvuru yapılamadı veya zaten başvuruldu.');
-        }
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Askıya başarıyla başvurdunuz!'),
+            backgroundColor:
+                Theme.of(context).colorScheme.primary, // Use primary color
+          ),
+        );
+      } else {
+        _showError('Başvuru yapılamadı veya zaten başvuruldu.');
       }
     } catch (e) {
       if (mounted) {
@@ -847,72 +1005,144 @@ class _FeedScreenState extends State<FeedScreen> {
 
               final applications = snapshot.data!;
 
-              return SizedBox(
-                width: double.maxFinite,
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: applications.length,
-                  itemBuilder: (context, index) {
-                    final app = applications[index];
-                    return ListTile(
-                      title: Text(app.applicantUserName),
-                      subtitle: Text(app.status.displayName),
-                      trailing:
-                          app.status == ApplicationStatus.accepted
-                              ? const Icon(
-                                Icons.check_circle,
-                                color: Colors.green,
-                              )
-                              : app.status == ApplicationStatus.rejected
-                              ? const Icon(Icons.cancel, color: Colors.red)
-                              : null,
-                    );
-                  },
-                ),
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    height: 300.0, // Constrain the height of the list
+                    width: double.maxFinite,
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: applications.length,
+                      itemBuilder: (context, index) {
+                        final app = applications[index];
+                        return FutureBuilder<UserModel?>(
+                          future: _userService.getUserById(app.applicantUserId),
+                          builder: (context, userSnapshot) {
+                            String? profileImageUrl =
+                                userSnapshot.data?.profileImageUrl;
+                            String displayName =
+                                app.applicantUserName.isNotEmpty
+                                    ? app.applicantUserName
+                                    : 'Bilinmiyor';
+                            String initial =
+                                displayName.isNotEmpty
+                                    ? displayName[0].toUpperCase()
+                                    : '?';
+
+                            return Card(
+                              margin: const EdgeInsets.symmetric(
+                                vertical: 4.0,
+                                horizontal: 0.0,
+                              ),
+                              elevation: 1,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: ListTile(
+                                leading: CircleAvatar(
+                                  radius: 20,
+                                  backgroundColor: Theme.of(context)
+                                      .colorScheme
+                                      .primary
+                                      .withAlpha((255 * 0.2).round()),
+                                  backgroundImage:
+                                      profileImageUrl != null &&
+                                              profileImageUrl.isNotEmpty
+                                          ? NetworkImage(profileImageUrl)
+                                              as ImageProvider
+                                          : null,
+                                  child:
+                                      profileImageUrl == null ||
+                                              profileImageUrl.isEmpty
+                                          ? Text(
+                                            initial,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          )
+                                          : null,
+                                ),
+                                title: Text(app.applicantUserName),
+                                subtitle: Text(app.status.displayName),
+                                trailing:
+                                    app.status == ApplicationStatus.accepted
+                                        ? Icon(
+                                          Icons.check_circle,
+                                          color: Colors.green,
+                                        )
+                                        : app.status ==
+                                            ApplicationStatus.rejected
+                                        ? Icon(Icons.cancel, color: Colors.red)
+                                        : null,
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(dialogContext),
+                          child: const Text('Kapat'),
+                        ),
+                        if (applications.isNotEmpty &&
+                            aski.postType ==
+                                PostType
+                                    .randomSelection) // Only show if there are applications and it's random selection
+                          ElevatedButton(
+                            onPressed: () async {
+                              final currentDialogContext =
+                                  dialogContext; // Capture context before async gap
+                              final selectedApplicant = await _askiService
+                                  .selectRandomApplicant(aski.id);
+                              if (!currentDialogContext.mounted) {
+                                return; // Check mounted status of captured context
+                              }
+                              if (selectedApplicant != null) {
+                                ScaffoldMessenger.of(
+                                  currentDialogContext,
+                                ).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Rastgele seçilen kişi: ${selectedApplicant.applicantUserName}',
+                                    ),
+                                    backgroundColor:
+                                        Theme.of(context).colorScheme.primary,
+                                  ),
+                                );
+                                Navigator.pop(
+                                  currentDialogContext,
+                                ); // Close dialog after selection
+                              } else {
+                                ScaffoldMessenger.of(
+                                  currentDialogContext,
+                                ).showSnackBar(
+                                  SnackBar(
+                                    content: const Text(
+                                      'Rastgele kişi seçilemedi.',
+                                    ),
+                                    backgroundColor:
+                                        Theme.of(context).colorScheme.error,
+                                  ),
+                                );
+                              }
+                            },
+                            child: const Text('Rastgele Seç'),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
               );
             },
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Kapat'),
-            ),
-            if (aski.status == AskiStatus.active &&
-                aski.donorUserId ==
-                    _currentUser?.uid) // Sadece askı sahibi seçebilir
-              ElevatedButton(
-                onPressed: () async {
-                  final currentContext =
-                      context; // BuildContext'i async işlemden önce yakala
-                  setState(() => _isLoading = true);
-                  final selectedApplicant = await _askiService
-                      .selectRandomApplicant(aski.id);
-                  if (mounted) {
-                    setState(() => _isLoading = false);
-                    if (selectedApplicant != null) {
-                      if (currentContext.mounted) {
-                        // Add this check
-                        ScaffoldMessenger.of(currentContext).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'Kazanan seçildi: ${selectedApplicant.applicantUserName}',
-                            ),
-                            backgroundColor: Colors.green,
-                          ),
-                        );
-                      }
-                      if (dialogContext.mounted) {
-                        // dialogContext'in mounted olup olmadığını kontrol et
-                        Navigator.pop(dialogContext); // Dialogu kapat
-                      }
-                    } else {
-                      _showError('Kazanan seçilemedi veya başvuru yok.');
-                    }
-                  }
-                },
-                child: const Text('Rastgele Seç'),
-              ),
-          ],
         );
       },
     );
@@ -936,15 +1166,15 @@ class _FeedScreenState extends State<FeedScreen> {
   Color _getStatusColor(AskiStatus status) {
     switch (status) {
       case AskiStatus.active:
-        return Colors.green;
+        return Theme.of(context).colorScheme.primary; // Use primary color
       case AskiStatus.taken:
-        return Colors.blue;
+        return Theme.of(context).colorScheme.secondary; // Use secondary color
       case AskiStatus.expired:
-        return Colors.orange;
+        return Colors.orange; // Keep orange for now, as it's not in the palette
       case AskiStatus.cancelled:
-        return Colors.red;
+        return Theme.of(context).colorScheme.error; // Use error color
       case AskiStatus.completed:
-        return Colors.purple; // Choose an appropriate color
+        return Colors.purple; // Keep purple for now, as it's not in the palette
     }
   }
 
@@ -971,23 +1201,33 @@ class _FeedScreenState extends State<FeedScreen> {
         return AlertDialog(
           title: Row(
             children: [
-              Icon(Icons.info, color: Colors.blue.shade600),
+              Icon(
+                Icons.info,
+                color: Theme.of(context).colorScheme.primary,
+              ), // Use primary color
               const SizedBox(width: 8),
               const Text('Bilgi'),
             ],
           ),
-          content: const Column(
+          content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Kurumsal kullanıcılar askıdan ürün alamaz.',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ), // Use onSurface
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               Text(
                 'Müşteriler mağazanıza geldiğinde QR kodunu okutarak ürünü teslim edebilirsiniz.',
-                style: TextStyle(fontSize: 14),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ), // Use onSurfaceVariant
               ),
             ],
           ),
@@ -1014,50 +1254,49 @@ class _FeedScreenState extends State<FeedScreen> {
         takenByUserId: _currentUser!.uid,
         takenByUserName: _currentUser!.fullName,
       );
-      if (mounted) {
-        setState(() => _isLoading = false);
-        if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                '${aski.productName} adlı askı başarıyla alındı! QR kodunuzu göstermek için yönlendiriliyorsunuz.',
-              ),
-              backgroundColor: Colors.green,
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${aski.productName} adlı askı başarıyla alındı! QR kodunuzu göstermek için yönlendiriliyorsunuz.',
             ),
-          );
-          // Send notification to the donor
-          final NotificationService notificationService = NotificationService();
-          await notificationService.createNotification(
-            userId: aski.donorUserId,
-            title: NotificationType.askiTaken.displayName,
-            message:
-                '${_currentUser!.fullName} adlı kullanıcı ${aski.productName} adlı askınızı aldı.',
-            type: NotificationType.askiTaken,
-            relatedPostId: aski.id,
-            data: {
-              'askiId': aski.id,
-              'productName': aski.productName,
-              'takerName': _currentUser!.fullName,
-              'takerId': _currentUser!.uid,
-            },
-          );
-          // Navigate to QRDisplayScreen
-          if (mounted) {
-            Navigator.of(context).pushNamed(
-              '/qrDisplay',
-              arguments: {
-                'askiId': aski.id,
-                'productName': aski.productName,
-                'corporateName': aski.corporateName,
-                'corporateId': aski.corporateId,
-                'applicantUserId': _currentUser!.uid,
-                'postType': aski.postType.name, // Pass postType
-              },
-            );
-          }
-        } else {
-          _showError('Askı alınırken bir hata oluştu veya zaten alınmış.');
-        }
+            backgroundColor:
+                Theme.of(context).colorScheme.primary, // Use primary color
+          ),
+        );
+        // Send notification to the donor
+        final NotificationService notificationService = NotificationService();
+        await notificationService.createNotification(
+          userId: aski.donorUserId,
+          title: NotificationType.askiTaken.displayName,
+          message:
+              '${_currentUser!.fullName} adlı kullanıcı ${aski.productName} adlı askınızı aldı.',
+          type: NotificationType.askiTaken,
+          relatedPostId: aski.id,
+          data: {
+            'askiId': aski.id,
+            'productName': aski.productName,
+            'takerName': _currentUser!.fullName,
+            'takerId': _currentUser!.uid,
+          },
+        );
+        // Navigate to QRDisplayScreen
+        if (!mounted) return;
+        Navigator.of(context).pushNamed(
+          '/qrDisplay',
+          arguments: {
+            'askiId': aski.id,
+            'productName': aski.productName,
+            'corporateName': aski.corporateName,
+            'corporateId': aski.corporateId,
+            'applicantUserId': _currentUser!.uid,
+            'postType': aski.postType.name, // Pass postType
+          },
+        );
+      } else {
+        _showError('Askı alınırken bir hata oluştu veya zaten alınmış.');
       }
     } catch (e) {
       if (mounted) {

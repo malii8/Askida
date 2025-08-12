@@ -7,6 +7,7 @@ import 'screens/create_post_screen.dart';
 import 'screens/feed_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/auth_screen.dart';
+import 'package:askida/screens/edit_profile_screen.dart'; // EditProfileScreen için eklendi
 
 import 'screens/settings_screen.dart';
 import 'screens/dashboard_screen.dart';
@@ -20,6 +21,18 @@ import 'screens/qr_display_screen.dart';
 import 'services/user_service.dart';
 import 'models/user_model.dart';
 import 'package:askida/models/aski_model.dart'; // PostType için eklendi
+
+// Define custom colors from the palette
+const Color primaryColor = Color(0xFF0D4A3A); // Dark Green
+const Color secondaryColor = Color(0xFF7B6823); // Dark Yellow/Brown
+const Color errorRed = Color(0xFFD92525); // Bright Red
+const Color darkTeal = Color(0xFF033B3D);
+const Color mediumGreen = Color(0xFF2D5731);
+const Color oliveGreen = Color(0xFF526126);
+const Color deepRed = Color(0xFF8C1F28); // Darker Red
+const Color veryDarkRed = Color(0xFF591C21); // Even Darker Red
+const Color veryDarkTeal = Color(0xFF044040);
+const Color lightBackground = Color(0xFFF2F2F2); // Light Grey for background
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -64,20 +77,39 @@ class MainApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
+          seedColor: primaryColor, // Use the new primary color
           brightness: Brightness.light,
+          primary: primaryColor,
+          onPrimary: Colors.white, // Text/icons on primary background
+          secondary: secondaryColor,
+          onSecondary: Colors.white, // Text/icons on secondary background
+          error: errorRed,
+          onError: Colors.white, // Text/icons on error background
+          surface: lightBackground, // Use light grey for general background
+          onSurface: darkTeal, // Text/icons on background
+          surfaceContainerHighest:
+              lightBackground, // For elements like CircleAvatar background
         ),
-        appBarTheme: const AppBarTheme(centerTitle: true, elevation: 0),
+        appBarTheme: AppBarTheme(
+          centerTitle: true,
+          elevation: 0,
+          backgroundColor: primaryColor, // AppBar background
+          foregroundColor: Colors.white, // AppBar text/icon color
+        ),
         cardTheme: CardTheme(
           elevation: 2,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
+          color: Colors.white, // Card background
+          surfaceTintColor: Colors.transparent, // Remove default surface tint
         ),
         inputDecorationTheme: InputDecorationTheme(
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           filled: true,
-          fillColor: Colors.grey.shade50,
+          fillColor: lightBackground, // Use lightBackground for input fields
+          labelStyle: TextStyle(color: primaryColor), // Label text color
+          hintStyle: TextStyle(color: Colors.grey.shade600), // Hint text color
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
@@ -85,8 +117,16 @@ class MainApp extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            backgroundColor: primaryColor, // Button background
+            foregroundColor: Colors.white, // Button text/icon color
           ),
         ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(
+            foregroundColor: primaryColor, // Text button color
+          ),
+        ),
+        // Add other theme properties as needed
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       builder: (context, child) {
@@ -168,6 +208,11 @@ class MainApp extends StatelessWidget {
         }
         if (settings.name == '/profile') {
           return MaterialPageRoute(builder: (context) => const ProfileScreen());
+        }
+        if (settings.name == '/editProfile') {
+          return MaterialPageRoute(
+            builder: (context) => const EditProfileScreen(),
+          );
         }
         return null;
       },

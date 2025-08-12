@@ -51,9 +51,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.error, size: 64, color: Colors.red),
+                  Icon(
+                    Icons.error,
+                    size: 64,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
                   const SizedBox(height: 16),
-                  Text('Hata: ${snapshot.error}'),
+                  Text(
+                    'Hata: ${snapshot.error}',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () {
@@ -62,7 +71,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             _notificationService.getUserNotificationsStream();
                       });
                     },
-                    child: const Text('Tekrar Dene'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                    ),
+                    child: Text(
+                      'Tekrar Dene',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onPrimary,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -72,15 +89,26 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           final notifications = snapshot.data ?? [];
 
           if (notifications.isEmpty) {
-            return const Center(
+            return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.notifications_none, size: 64, color: Colors.grey),
-                  SizedBox(height: 16),
+                  Icon(
+                    Icons.notifications_none,
+                    size: 64,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
+                  ),
+                  const SizedBox(height: 16),
                   Text(
                     'Henüz bildiriminiz yok',
-                    style: TextStyle(fontSize: 18, color: Colors.grey),
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
+                    ),
                   ),
                 ],
               ),
@@ -109,16 +137,19 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       await _notificationService.markAllAsRead();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Tüm bildirimler okundu olarak işaretlendi'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: const Text('Tüm bildirimler okundu olarak işaretlendi'),
+            backgroundColor: Theme.of(context).colorScheme.tertiary,
           ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Hata: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Hata: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
         );
       }
     }
@@ -130,7 +161,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Hata: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Hata: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
         );
       }
     }
@@ -141,16 +175,19 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       await _notificationService.deleteNotification(notificationId);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Bildirim silindi'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: const Text('Bildirim silindi'),
+            backgroundColor: Theme.of(context).colorScheme.tertiary,
           ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Hata: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Hata: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
         );
       }
     }
@@ -219,9 +256,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         Navigator.of(context).pushNamed('/postDetail', arguments: post);
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Post bulunamadı veya silinmiş'),
-            backgroundColor: Colors.orange,
+          SnackBar(
+            content: const Text('Post bulunamadı veya silinmiş'),
+            backgroundColor: Theme.of(context).colorScheme.secondary,
           ),
         );
       }
@@ -230,7 +267,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Post yüklenirken hata: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -240,7 +277,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   void _showError(String message) {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
       );
     }
   }
@@ -264,13 +304,15 @@ class _NotificationTile extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       elevation: notification.isRead ? 1 : 3,
+      color: Theme.of(context).colorScheme.surface,
       child: ListTile(
-        leading: _buildLeadingIcon(),
+        leading: _buildLeadingIcon(context),
         title: Text(
           notification.title,
           style: TextStyle(
             fontWeight:
                 notification.isRead ? FontWeight.normal : FontWeight.bold,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         subtitle: Column(
@@ -279,13 +321,23 @@ class _NotificationTile extends StatelessWidget {
             Text(
               notification.message,
               style: TextStyle(
-                color: notification.isRead ? Colors.grey[600] : Colors.black87,
+                color:
+                    notification.isRead
+                        ? Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withAlpha((255 * 0.6).round())
+                        : Theme.of(context).colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 4),
             Text(
               _formatDate(notification.createdAt),
-              style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withAlpha((255 * 0.5).round()),
+              ),
             ),
           ],
         ),
@@ -303,88 +355,129 @@ class _NotificationTile extends StatelessWidget {
           itemBuilder:
               (context) => [
                 if (!notification.isRead)
-                  const PopupMenuItem<String>(
+                  PopupMenuItem<String>(
                     value: 'mark_read',
                     child: Row(
                       children: [
-                        Icon(Icons.mark_email_read),
-                        SizedBox(width: 8),
-                        Text('Okundu İşaretle'),
+                        Icon(
+                          Icons.mark_email_read,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Okundu İşaretle',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                const PopupMenuItem<String>(
+                PopupMenuItem<String>(
                   value: 'delete',
                   child: Row(
                     children: [
-                      Icon(Icons.delete),
-                      SizedBox(width: 8),
-                      Text('Sil'),
+                      Icon(
+                        Icons.delete,
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Sil',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ],
+          icon: Icon(
+            Icons.more_vert,
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
+          ),
         ),
         onTap: onTap,
         tileColor:
-            notification.isRead ? null : Colors.blue.withValues(alpha: 0.1),
+            notification.isRead
+                ? null
+                : Theme.of(
+                  context,
+                ).colorScheme.primary.withAlpha((255 * 0.1).round()),
       ),
     );
   }
 
-  Widget _buildLeadingIcon() {
+  Widget _buildLeadingIcon(BuildContext context) {
     IconData icon;
     Color color;
 
     switch (notification.type) {
       case NotificationType.applicationReceived:
         icon = Icons.person_add;
-        color = Colors.blue;
+        color = Theme.of(context).colorScheme.primary;
         break;
       case NotificationType.applicationAccepted:
         icon = Icons.check_circle;
-        color = Colors.green;
+        color = Theme.of(context).colorScheme.tertiary;
         break;
       case NotificationType.applicationRejected:
         icon = Icons.cancel;
-        color = Colors.red;
+        color = Theme.of(context).colorScheme.error;
         break;
       case NotificationType.postExpired:
         icon = Icons.access_time;
-        color = Colors.orange;
+        color = Theme.of(context).colorScheme.secondary;
         break;
       case NotificationType.newMessage:
         icon = Icons.message;
-        color = Colors.purple;
+        color =
+            Theme.of(context).colorScheme.primary; // Using primary for messages
         break;
       case NotificationType.adminNotification:
         icon = Icons.admin_panel_settings;
-        color = Colors.indigo;
+        color =
+            Theme.of(
+              context,
+            ).colorScheme.primary; // Using primary for admin notifications
         break;
       case NotificationType.productClaimed:
         icon = Icons.shopping_bag;
-        color = Colors.green;
+        color = Theme.of(context).colorScheme.tertiary;
         break;
       case NotificationType.askiWon:
         icon = Icons.emoji_events; // Kupa veya ödül ikonu
-        color = Colors.amber; // Altın rengi
+        color =
+            Theme.of(
+              context,
+            ).colorScheme.secondary; // Using secondary for won aski
         break;
       case NotificationType.askiTaken:
         icon = Icons.check_circle_outline; // Checkmark icon
-        color = Colors.teal; // A distinct color
+        color =
+            Theme.of(
+              context,
+            ).colorScheme.tertiary; // Using tertiary for taken aski
         break;
       case NotificationType.productDelivered:
         icon = Icons.check_box; // Delivered icon
-        color = Colors.lightGreen; // Delivered color
+        color =
+            Theme.of(
+              context,
+            ).colorScheme.tertiary; // Using tertiary for delivered
         break;
       default:
         icon = Icons.info; // Default icon
-        color = Colors.grey; // Default color
+        color = Theme.of(
+          context,
+        ).colorScheme.onSurface.withAlpha((255 * 0.6).round()); // Default color
         break;
     }
 
     return CircleAvatar(
-      backgroundColor: color.withValues(alpha: 0.2),
+      backgroundColor: color.withAlpha((255 * 0.2).round()),
       child: Icon(icon, color: color),
     );
   }

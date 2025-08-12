@@ -4,8 +4,6 @@ import '../models/aski_model.dart';
 import '../services/user_service.dart';
 import '../services/aski_service.dart';
 
-import 'settings_screen.dart';
-
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -155,54 +153,33 @@ class _ProfileScreenState extends State<ProfileScreen>
     }
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
-      body: CustomScrollView(
-        slivers: [
-          _buildAppBar(),
-          SliverToBoxAdapter(
-            child: Column(
-              children: [
-                _buildProfileHeader(),
-                _buildStatsCards(),
-                // QR ile Aldığım Ürünler listesi sadece bireysel kullanıcılar için
-                if (_currentUser?.userType == UserType.individual) ...[
-                  _buildTakenAskisList(),
-                ],
-                _buildTabSection(),
-              ],
-            ),
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(
+        title: const Text('Profil'),
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.of(context).pushNamed('/settings');
+            },
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildAppBar() {
-    return SliverAppBar(
-      expandedHeight: 100,
-      floating: false,
-      pinned: true,
-      backgroundColor: Theme.of(context).colorScheme.primary,
-      foregroundColor: Colors.white,
-      elevation: 0,
-      flexibleSpace: FlexibleSpaceBar(
-        title: const Text(
-          'Profil',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      body: SingleChildScrollView(
+        // Changed to SingleChildScrollView
+        child: Column(
+          children: [
+            _buildProfileHeader(),
+            _buildStatsCards(),
+            // QR ile Aldığım Ürünler listesi sadece bireysel kullanıcılar için
+            if (_currentUser?.userType == UserType.individual) ...[
+              _buildTakenAskisList(),
+            ],
+            _buildTabSection(),
+          ],
         ),
-        centerTitle: true,
       ),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.settings),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const SettingsScreen()),
-            );
-          },
-        ),
-      ],
     );
   }
 
@@ -211,11 +188,13 @@ class _ProfileScreenState extends State<ProfileScreen>
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.1),
+            color: Theme.of(
+              context,
+            ).colorScheme.shadow.withAlpha((255 * 0.3).round()),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -223,50 +202,59 @@ class _ProfileScreenState extends State<ProfileScreen>
       ),
       child: Column(
         children: [
-          Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary,
-              borderRadius: BorderRadius.circular(50),
-              boxShadow: [
-                BoxShadow(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.primary.withValues(alpha: 0.3),
-                  blurRadius: 15,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Center(
-              child: Text(
-                _currentUser!.fullName.isNotEmpty
-                    ? _currentUser!.fullName[0].toUpperCase()
-                    : 'U',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 36,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
+          // Profil Resmi / Avatar
+          CircleAvatar(
+            radius: 50,
+            backgroundColor: Theme.of(context).colorScheme.primary.withAlpha(
+              (255 * 0.2).round(),
+            ), // Use withAlpha
+            backgroundImage:
+                _currentUser?.profileImageUrl != null &&
+                        _currentUser!.profileImageUrl!.isNotEmpty
+                    ? NetworkImage(_currentUser!.profileImageUrl!)
+                        as ImageProvider
+                    : null,
+            child:
+                _currentUser?.profileImageUrl == null ||
+                        _currentUser!.profileImageUrl!.isEmpty
+                    ? Text(
+                      _currentUser!.fullName.isNotEmpty
+                          ? _currentUser!.fullName[0].toUpperCase()
+                          : 'U',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onPrimary,
+                        fontSize: 36,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
+                    : null,
           ),
           const SizedBox(height: 20),
           Text(
             _currentUser!.fullName,
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             _currentUser!.email,
-            style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+            style: TextStyle(
+              fontSize: 16,
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
+            ),
           ),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: _getUserTypeColor().withValues(alpha: 0.1),
+              color: _getUserTypeColor().withAlpha(
+                (255 * 0.1).round(),
+              ), // Use withAlpha
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: _getUserTypeColor()),
             ),
@@ -279,56 +267,48 @@ class _ProfileScreenState extends State<ProfileScreen>
               ),
             ),
           ),
-          if (_currentUser!.userType == UserType.corporate) ...[
-            const SizedBox(height: 16),
-            if (_currentUser!.companyName != null)
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.business, color: Colors.blue.shade700, size: 20),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        _currentUser!.companyName!,
-                        style: TextStyle(
-                          color: Colors.blue.shade700,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
+          if (_currentUser?.userType ==
+              UserType.corporate) // Show approval status for corporate users
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Text(
+                _currentUser!.isApproved
+                    ? 'Onaylı Kurumsal Kullanıcı'
+                    : 'Onay Bekliyor',
+                style: TextStyle(
+                  fontSize: 14,
+                  color:
+                      _currentUser!.isApproved
+                          ? Theme.of(context).colorScheme.tertiary
+                          : Theme.of(context).colorScheme.error,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-          ],
+            ),
         ],
       ),
     );
   }
 
   Widget _buildStatsCards() {
-    final stats = [
+    final List<Map<String, dynamic>> stats = [
       {
         'title': 'Toplam Askım',
         'value': _stats['total'] ?? 0,
         'icon': Icons.local_offer,
-        'color': Colors.blue,
+        'color': Theme.of(context).colorScheme.primary,
       },
       {
         'title': 'Aktif Askılar',
         'value': _stats['active'] ?? 0,
         'icon': Icons.check_circle,
-        'color': Colors.green,
+        'color': Theme.of(context).colorScheme.tertiary,
       },
       {
         'title': 'Alınan Askılar',
         'value': _stats['taken'] ?? 0,
         'icon': Icons.shopping_bag,
-        'color': Colors.orange,
+        'color': Theme.of(context).colorScheme.secondary,
       },
     ];
 
@@ -338,12 +318,15 @@ class _ProfileScreenState extends State<ProfileScreen>
         'title': 'Aldığım Askılar',
         'value': _takenAskis.length,
         'icon': Icons.favorite,
-        'color': Colors.red,
+        'color': Theme.of(context).colorScheme.error,
       });
     }
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
+      margin: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 20,
+      ), // Adjusted margin
       child: GridView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
@@ -362,13 +345,15 @@ class _ProfileScreenState extends State<ProfileScreen>
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.grey.withValues(alpha: 0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.shadow.withAlpha((255 * 0.15).round()),
+                    blurRadius: 12, // Adjusted blur
+                    offset: const Offset(0, 6), // Adjusted offset
                   ),
                 ],
               ),
@@ -382,12 +367,12 @@ class _ProfileScreenState extends State<ProfileScreen>
                       Icon(
                         stat['icon'] as IconData,
                         color: stat['color'] as Color,
-                        size: 24,
+                        size: 28, // Increased icon size
                       ),
                       Text(
                         '${stat['value']}',
                         style: TextStyle(
-                          fontSize: 24,
+                          fontSize: 28, // Increased font size
                           fontWeight: FontWeight.bold,
                           color: stat['color'] as Color,
                         ),
@@ -397,9 +382,11 @@ class _ProfileScreenState extends State<ProfileScreen>
                   Text(
                     stat['title'] as String,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 14, // Increased font size
                       fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade700,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.7).round()),
                     ),
                   ),
                 ],
@@ -423,11 +410,13 @@ class _ProfileScreenState extends State<ProfileScreen>
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.08), // Deprecated düzeltildi
+            color: Theme.of(
+              context,
+            ).colorScheme.shadow.withAlpha((255 * 0.08).round()),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -437,19 +426,32 @@ class _ProfileScreenState extends State<ProfileScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: const [
-              Icon(Icons.qr_code_scanner, color: Colors.red, size: 20),
-              SizedBox(width: 8),
+            children: [
+              Icon(
+                Icons.qr_code_scanner,
+                color: Theme.of(context).colorScheme.error,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
               Text(
                 'QR ile Aldığım Ürünler',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 8),
           Text(
             'Bu listede QR kod okutarak aldığınız ürünler görünür.',
-            style: TextStyle(fontSize: 13, color: Colors.grey),
+            style: TextStyle(
+              fontSize: 13,
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withAlpha((255 * 0.5).round()),
+            ),
           ),
           const SizedBox(height: 12),
           if (_takenAskis.isEmpty)
@@ -458,61 +460,88 @@ class _ProfileScreenState extends State<ProfileScreen>
               padding: const EdgeInsets.symmetric(vertical: 32),
               alignment: Alignment.center,
               child: Column(
-                children: const [
+                children: [
                   Icon(
                     Icons.shopping_bag_outlined,
                     size: 48,
-                    color: Colors.grey,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withAlpha((255 * 0.3).round()),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
-                    'Henüz QR ile ürün almadınız.',
-                    style: TextStyle(color: Colors.grey),
+                    'Henüz QR ile aldığınız bir ürün yok.',
+                    style: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.5).round()),
+                    ),
                   ),
                 ],
               ),
             )
           else
-            ListView.separated(
+            ListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: _takenAskis.length,
-              separatorBuilder: (_, __) => const Divider(height: 16),
               itemBuilder: (context, index) {
                 final aski = _takenAskis[index];
-                return Row(
-                  children: [
-                    CircleAvatar(
-                      backgroundColor: Colors.red.shade100,
-                      child: Icon(
-                        Icons.shopping_bag,
-                        color: Colors.red.shade700,
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.error.withAlpha((255 * 0.1).round()),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.shopping_bag,
+                          color: Theme.of(context).colorScheme.error,
+                          size: 24,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            aski.productName,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          Text(
-                            aski.corporateName,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              aski.productName,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
                             ),
-                          ),
-                        ],
+                            Text(
+                              aski.corporateName,
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface
+                                    .withAlpha((255 * 0.6).round()),
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    Text(
-                      aski.takenAt != null ? _formatDate(aski.takenAt!) : '-',
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                  ],
+                      Text(
+                        _formatDate(
+                          aski.takenAt ?? aski.createdAt,
+                        ), // Teslim alınma zamanı
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface
+                              .withAlpha((255 * 0.5).round()),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
                 );
               },
             ),
@@ -531,13 +560,15 @@ class _ProfileScreenState extends State<ProfileScreen>
     return Container(
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+            color: Theme.of(
+              context,
+            ).colorScheme.shadow.withAlpha((255 * 0.15).round()),
+            blurRadius: 12, // Adjusted blur
+            offset: const Offset(0, 6), // Adjusted offset
           ),
         ],
       ),
@@ -548,11 +579,13 @@ class _ProfileScreenState extends State<ProfileScreen>
             tabs: tabs,
             indicatorColor: Theme.of(context).colorScheme.primary,
             labelColor: Theme.of(context).colorScheme.primary,
-            unselectedLabelColor: Colors.grey,
+            unselectedLabelColor: Theme.of(
+              context,
+            ).colorScheme.onSurface.withAlpha((255 * 0.5).round()),
             indicatorSize: TabBarIndicatorSize.tab,
           ),
           SizedBox(
-            height: 400,
+            height: 400, // Fixed height for TabBarView
             child: TabBarView(
               controller: _tabController,
               children: [
@@ -630,21 +663,34 @@ class _ProfileScreenState extends State<ProfileScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 80, color: Colors.grey.shade300),
+            Icon(
+              icon,
+              size: 80,
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withAlpha((255 * 0.3).round()),
+            ),
             const SizedBox(height: 24),
             Text(
               title,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: Colors.grey.shade600,
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
               ),
             ),
             const SizedBox(height: 12),
             Text(
               subtitle,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, color: Colors.grey.shade500),
+              style: TextStyle(
+                fontSize: 16,
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withAlpha((255 * 0.5).round()),
+              ),
             ),
             if (buttonText != null && onPressed != null) ...[
               const SizedBox(height: 24),
@@ -652,7 +698,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 onPressed: onPressed,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Colors.white,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 24,
                     vertical: 12,
@@ -672,9 +718,9 @@ class _ProfileScreenState extends State<ProfileScreen>
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -685,7 +731,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: _getStatusColor(aski.status).withValues(alpha: 0.1),
+                  color: _getStatusColor(
+                    aski.status,
+                  ).withAlpha((255 * 0.1).round()),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Icon(
@@ -701,9 +749,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                   children: [
                     Text(
                       aski.productName,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -711,7 +760,8 @@ class _ProfileScreenState extends State<ProfileScreen>
                       Text(
                         'Bağışçı: ${aski.donorUserName}',
                         style: TextStyle(
-                          color: Colors.grey.shade600,
+                          color: Theme.of(context).colorScheme.onSurface
+                              .withAlpha((255 * 0.6).round()),
                           fontSize: 14,
                         ),
                       ),
@@ -732,8 +782,8 @@ class _ProfileScreenState extends State<ProfileScreen>
                     ),
                     child: Text(
                       _getStatusText(aski.status),
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onPrimary,
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
@@ -742,7 +792,12 @@ class _ProfileScreenState extends State<ProfileScreen>
                   const SizedBox(height: 4),
                   Text(
                     _formatDate(aski.createdAt),
-                    style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                    style: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.5).round()),
+                      fontSize: 12,
+                    ),
                   ),
                 ],
               ),
@@ -753,14 +808,18 @@ class _ProfileScreenState extends State<ProfileScreen>
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey.shade200),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.outline,
+                ),
               ),
               child: Text(
                 aski.message!,
                 style: TextStyle(
-                  color: Colors.grey.shade700,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withAlpha((255 * 0.7).round()),
                   fontSize: 14,
                   fontStyle: FontStyle.italic,
                 ),
@@ -774,8 +833,10 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   Color _getUserTypeColor() {
     return _currentUser?.userType == UserType.corporate
-        ? Colors.blue
-        : Colors.green;
+        ? Theme.of(context)
+            .colorScheme
+            .secondary // Kurumsal için secondary
+        : Theme.of(context).colorScheme.primary; // Bireysel için primary
   }
 
   String _getUserTypeText() {
@@ -787,15 +848,17 @@ class _ProfileScreenState extends State<ProfileScreen>
   Color _getStatusColor(AskiStatus status) {
     switch (status) {
       case AskiStatus.active:
-        return Colors.green;
+        return Theme.of(context).colorScheme.primary; // Aktif için primary
       case AskiStatus.taken:
-        return Colors.blue;
+        return Theme.of(context).colorScheme.secondary; // Alındı için secondary
       case AskiStatus.expired:
-        return Colors.orange;
+        return Theme.of(context).colorScheme.error; // Süresi doldu için error
       case AskiStatus.cancelled:
-        return Colors.red;
+        return Theme.of(context).colorScheme.error; // İptal edildi için error
       case AskiStatus.completed:
-        return Colors.purple; // Choose an appropriate color
+        return Theme.of(
+          context,
+        ).colorScheme.tertiary; // Tamamlandı için tertiary
     }
   }
 

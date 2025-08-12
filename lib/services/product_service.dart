@@ -181,7 +181,24 @@ class ProductService {
           }).toList();
         });
   }
+
+  // Tüm benzersiz ürün kategorilerini getirme
+  Future<List<String>> getAllCategories() async {
+    try {
+      final querySnapshot = await _firestore.collection('products').get();
+      final categories = <String>{};
+      for (var doc in querySnapshot.docs) {
+        final data = doc.data();
+        if (data.containsKey('category') && data['category'] is String) {
+          categories.add(data['category'] as String);
+        }
+      }
+      return [
+        'Tümü',
+        ...categories.toList()..sort(),
+      ]; // 'Tümü' seçeneğini ekle ve sırala
+    } catch (e) {
+      throw Exception('Kategoriler alınırken hata oluştu: $e');
+    }
+  }
 }
-
-
-

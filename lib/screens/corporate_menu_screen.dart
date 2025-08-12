@@ -81,7 +81,7 @@ class _CorporateMenuScreenState extends State<CorporateMenuScreen> {
                     title: 'Ürün Yönetimi',
                     subtitle: 'Ürünlerinizi kaydedin ve yönetin',
                     icon: Icons.inventory,
-                    color: Colors.blue,
+                    color: Theme.of(context).colorScheme.primary,
                     onTap: () {
                       Navigator.pushNamed(
                         context,
@@ -95,7 +95,7 @@ class _CorporateMenuScreenState extends State<CorporateMenuScreen> {
                     title: 'QR Doğrulama',
                     subtitle: 'Askıdan alınacak ürünleri doğrulayın',
                     icon: Icons.qr_code_scanner,
-                    color: Colors.green,
+                    color: Theme.of(context).colorScheme.tertiary,
                     onTap: () {
                       Navigator.pushNamed(context, '/qrValidator');
                     },
@@ -105,7 +105,7 @@ class _CorporateMenuScreenState extends State<CorporateMenuScreen> {
                     title: 'Askı Geçmişi',
                     subtitle: 'Ürünlerinizin askı geçmişini görün',
                     icon: Icons.history,
-                    color: Colors.orange,
+                    color: Theme.of(context).colorScheme.secondary,
                     onTap: () {
                       _showComingSoon(context, 'Askı Geçmişi');
                     },
@@ -115,7 +115,7 @@ class _CorporateMenuScreenState extends State<CorporateMenuScreen> {
                     title: 'İstatistikler',
                     subtitle: 'Askı ve alım istatistikleriniz',
                     icon: Icons.analytics,
-                    color: Colors.purple,
+                    color: Theme.of(context).colorScheme.primary,
                     onTap: () {
                       _showComingSoon(context, 'İstatistikler');
                     },
@@ -139,6 +139,7 @@ class _CorporateMenuScreenState extends State<CorporateMenuScreen> {
   }) {
     return Card(
       elevation: 4,
+      color: Theme.of(context).colorScheme.surface,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
@@ -151,15 +152,20 @@ class _CorporateMenuScreenState extends State<CorporateMenuScreen> {
               const SizedBox(height: 12),
               Text(
                 title,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               Text(
                 subtitle,
-                style: Theme.of(context).textTheme.bodySmall,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withAlpha((255 * 0.7).round()),
+                ),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -186,6 +192,3 @@ class _CorporateMenuScreenState extends State<CorporateMenuScreen> {
     );
   }
 }
-
-
-

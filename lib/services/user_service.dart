@@ -1,14 +1,30 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart'; // Firebase Storage için eklendi
 import 'dart:developer' as developer;
+import 'dart:io'; // File sınıfı için eklendi
 import '../models/user_model.dart';
 
 class UserService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance; // Yeni eklendi
 
   // Kullanıcı koleksiyonu referansı
   CollectionReference get _usersCollection => _firestore.collection('users');
+
+  // Profil resmini yükleme
+  Future<String?> uploadProfileImage(String userId, File imageFile) async {
+    try {
+      final ref = _storage.ref().child('profile_images').child('$userId.jpg');
+      await ref.putFile(imageFile);
+      final downloadUrl = await ref.getDownloadURL();
+      return downloadUrl;
+    } catch (e) {
+      developer.log('Profil resmi yüklenirken hata: $e', name: 'UserService');
+      return null;
+    }
+  }
 
   // Yeni kullanıcı kaydetme
   Future<void> createUser(UserModel userModel) async {
@@ -206,6 +222,3 @@ class UserService {
     }
   }
 }
-
-
-

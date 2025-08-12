@@ -58,16 +58,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
       // Ayarları Firestore'a kaydet (gelecekte implementasyon)
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Ayarlar kaydedildi'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: const Text('Ayarlar kaydedildi'),
+            backgroundColor:
+                Theme.of(context).colorScheme.primary, // Use primary color
           ),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ayarlar kaydedilirken hata: $e')),
+          SnackBar(
+            content: Text('Ayarlar kaydedilirken hata: $e'),
+            backgroundColor:
+                Theme.of(context).colorScheme.error, // Use error color
+          ),
         );
       }
     }
@@ -83,9 +88,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Çıkış yapılırken hata: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Çıkış yapılırken hata: $e'),
+            backgroundColor:
+                Theme.of(context).colorScheme.error, // Use error color
+          ),
+        );
       }
     }
   }
@@ -106,7 +115,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               TextButton(
                 onPressed: () => Navigator.of(context).pop(true),
-                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                style: TextButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.error,
+                ), // Use error color
                 child: const Text('Sil'),
               ),
             ],
@@ -118,17 +129,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
         // Hesap silme işlemi (gelecekte implementasyon)
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Hesap silme talebi alındı'),
-              backgroundColor: Colors.orange,
+            SnackBar(
+              content: const Text('Hesap silme talebi alındı'),
+              backgroundColor:
+                  Theme.of(
+                    context,
+                  ).colorScheme.secondary, // Use secondary color
             ),
           );
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Hata: $e')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Hata: $e'),
+              backgroundColor:
+                  Theme.of(context).colorScheme.error, // Use error color
+            ),
+          );
         }
       }
     }
@@ -161,6 +179,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // Kullanıcı bilgileri
           if (_currentUser != null) ...[
             Card(
+              color: Theme.of(context).colorScheme.surface,
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -172,13 +191,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           radius: 30,
                           backgroundColor:
                               _currentUser!.userType == UserType.corporate
-                                  ? Colors.blue
-                                  : Colors.green,
+                                  ? Theme.of(context)
+                                      .colorScheme
+                                      .secondary // Use secondary for corporate
+                                  : Theme.of(context)
+                                      .colorScheme
+                                      .primary, // Use primary for individual
                           child: Icon(
                             _currentUser!.userType == UserType.corporate
                                 ? Icons.business
                                 : Icons.person,
-                            color: Colors.white,
+                            color:
+                                Theme.of(context)
+                                    .colorScheme
+                                    .onPrimary, // Use onPrimary for icon color
                             size: 30,
                           ),
                         ),
@@ -189,15 +215,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             children: [
                               Text(
                                 _currentUser!.fullName,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
-                              Text(_currentUser!.email),
+                              Text(
+                                _currentUser!.email,
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.onSurface
+                                      .withAlpha((255 * 0.7).round()),
+                                ),
+                              ),
                               Text(
                                 _currentUser!.userType.displayName,
-                                style: TextStyle(color: Colors.grey[600]),
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.onSurface
+                                      .withAlpha((255 * 0.6).round()),
+                                ),
                               ),
                             ],
                           ),
@@ -212,59 +249,144 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ],
 
           // Bildirim ayarları
-          const Text(
+          Text(
             'Bildirim Ayarları',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
           const SizedBox(height: 8),
           Card(
+            color: Theme.of(context).colorScheme.surface,
             child: Column(
               children: [
                 SwitchListTile(
-                  title: const Text('Başvuru Bildirimleri'),
-                  subtitle: const Text('Postlarınıza yapılan başvurular'),
+                  title: Text(
+                    'Başvuru Bildirimleri',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Postlarınıza yapılan başvurular',
+                    style: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.7).round()),
+                    ),
+                  ),
                   value: _applicationNotifications,
                   onChanged: (value) {
                     setState(() => _applicationNotifications = value);
                   },
                 ),
                 SwitchListTile(
-                  title: const Text('Ürün Teslim Bildirimleri'),
-                  subtitle: const Text('Ürünleriniz teslim alındığında'),
+                  title: Text(
+                    'Ürün Teslim Bildirimleri',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Ürünleriniz teslim alındığında',
+                    style: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.7).round()),
+                    ),
+                  ),
                   value: _productClaimedNotifications,
                   onChanged: (value) {
                     setState(() => _productClaimedNotifications = value);
                   },
                 ),
                 SwitchListTile(
-                  title: const Text('Yeni Post Bildirimleri'),
-                  subtitle: const Text('İlginizi çekebilecek yeni postlar'),
+                  title: Text(
+                    'Yeni Post Bildirimleri',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'İlginizi çekebilecek yeni postlar',
+                    style: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.7).round()),
+                    ),
+                  ),
                   value: _newPostNotifications,
                   onChanged: (value) {
                     setState(() => _newPostNotifications = value);
                   },
                 ),
                 SwitchListTile(
-                  title: const Text('Sistem Bildirimleri'),
-                  subtitle: const Text('Önemli sistem güncellemeleri'),
+                  title: Text(
+                    'Sistem Bildirimleri',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Önemli sistem güncellemeleri',
+                    style: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.7).round()),
+                    ),
+                  ),
                   value: _adminNotifications,
                   onChanged: (value) {
                     setState(() => _adminNotifications = value);
                   },
                 ),
                 SwitchListTile(
-                  title: const Text('E-posta Bildirimleri'),
-                  subtitle: const Text('Bildirimleri e-posta ile al'),
+                  title: Text(
+                    'E-posta Bildirimleri',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Bildirimleri e-posta ile al',
+                    style: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.7).round()),
+                    ),
+                  ),
                   value: _emailNotifications,
                   onChanged: (value) {
                     setState(() => _emailNotifications = value);
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.tune),
-                  title: const Text('Gelişmiş Bildirim Ayarları'),
-                  subtitle: const Text('Tüm bildirim türlerini yönet'),
-                  trailing: const Icon(Icons.arrow_forward_ios),
+                  leading: Icon(
+                    Icons.tune,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  title: Text(
+                    'Gelişmiş Bildirim Ayarları',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Tüm bildirim türlerini yönet',
+                    style: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.7).round()),
+                    ),
+                  ),
+                  trailing: Icon(
+                    Icons.arrow_forward_ios,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
+                  ),
                   onTap: () {
                     Navigator.pushNamed(context, '/notificationSettings');
                   },
@@ -276,18 +398,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 24),
 
           // Gizlilik ayarları
-          const Text(
+          Text(
             'Gizlilik Ayarları',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
           const SizedBox(height: 8),
           Card(
+            color: Theme.of(context).colorScheme.surface,
             child: Column(
               children: [
                 SwitchListTile(
-                  title: const Text('Profili Göster'),
-                  subtitle: const Text(
+                  title: Text(
+                    'Profili Göster',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  subtitle: Text(
                     'Profilinizi diğer kullanıcılara göster',
+                    style: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.7).round()),
+                    ),
                   ),
                   value: _showProfile,
                   onChanged: (value) {
@@ -295,17 +432,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   },
                 ),
                 SwitchListTile(
-                  title: const Text('Postları Göster'),
-                  subtitle: const Text('Postlarınızı herkese açık göster'),
+                  title: Text(
+                    'Postları Göster',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Postlarınızı herkese açık göster',
+                    style: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.7).round()),
+                    ),
+                  ),
                   value: _showPosts,
                   onChanged: (value) {
                     setState(() => _showPosts = value);
                   },
                 ),
                 SwitchListTile(
-                  title: const Text('Direkt Mesajlara İzin Ver'),
-                  subtitle: const Text(
+                  title: Text(
+                    'Direkt Mesajlara İzin Ver',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  subtitle: Text(
                     'Diğer kullanıcıların size mesaj göndermesine izin ver',
+                    style: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.7).round()),
+                    ),
                   ),
                   value: _allowDirectMessages,
                   onChanged: (value) {
@@ -319,69 +478,180 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 24),
 
           // Hesap işlemleri
-          const Text(
+          Text(
             'Hesap İşlemleri',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
           const SizedBox(height: 8),
           Card(
+            color: Theme.of(context).colorScheme.surface,
             child: Column(
               children: [
                 ListTile(
-                  leading: const Icon(Icons.edit, color: Colors.blue),
-                  title: const Text('Profili Düzenle'),
-                  subtitle: const Text('Profil bilgilerinizi güncelleyin'),
-                  trailing: const Icon(Icons.arrow_forward_ios),
+                  leading: Icon(
+                    Icons.edit,
+                    color: Theme.of(context).colorScheme.primary,
+                  ), // Use primary color
+                  title: Text(
+                    'Profili Düzenle',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Profil bilgilerinizi güncelleyin',
+                    style: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.7).round()),
+                    ),
+                  ),
+                  trailing: Icon(
+                    Icons.arrow_forward_ios,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
+                  ),
                   onTap: () {
                     // Profil düzenleme sayfasına git
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Profil düzenleme yakında eklenecek'),
-                      ),
-                    );
+                    Navigator.pushNamed(context, '/editProfile');
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.security, color: Colors.orange),
-                  title: const Text('Şifre Değiştir'),
-                  subtitle: const Text('Hesap güvenliğinizi artırın'),
-                  trailing: const Icon(Icons.arrow_forward_ios),
+                  leading: Icon(
+                    Icons.security,
+                    color: Theme.of(context).colorScheme.secondary,
+                  ), // Use secondary color
+                  title: Text(
+                    'Şifre Değiştir',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Hesap güvenliğinizi artırın',
+                    style: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.7).round()),
+                    ),
+                  ),
+                  trailing: Icon(
+                    Icons.arrow_forward_ios,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
+                  ),
                   onTap: () {
                     // Şifre değiştirme sayfasına git
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Şifre değiştirme yakında eklenecek'),
+                      SnackBar(
+                        content: const Text(
+                          'Şifre değiştirme yakında eklenecek',
+                        ),
+                        backgroundColor:
+                            Theme.of(
+                              context,
+                            ).colorScheme.secondary, // Use secondary color
                       ),
                     );
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.download, color: Colors.green),
-                  title: const Text('Verilerimi İndir'),
-                  subtitle: const Text(
-                    'Kişisel verilerinizin kopyasını indirin',
+                  leading: Icon(
+                    Icons.download,
+                    color: Theme.of(context).colorScheme.primary,
+                  ), // Use primary color
+                  title: Text(
+                    'Verilerimi İndir',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
                   ),
-                  trailing: const Icon(Icons.arrow_forward_ios),
+                  subtitle: Text(
+                    'Kişisel verilerinizin kopyasını indirin',
+                    style: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.7).round()),
+                    ),
+                  ),
+                  trailing: Icon(
+                    Icons.arrow_forward_ios,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
+                  ),
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Veri indirme yakında eklenecek'),
+                      SnackBar(
+                        content: const Text('Veri indirme yakında eklenecek'),
+                        backgroundColor:
+                            Theme.of(
+                              context,
+                            ).colorScheme.primary, // Use primary color
                       ),
                     );
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.logout, color: Colors.grey),
-                  title: const Text('Çıkış Yap'),
-                  subtitle: const Text('Hesabınızdan güvenli çıkış yapın'),
-                  trailing: const Icon(Icons.arrow_forward_ios),
+                  leading: Icon(
+                    Icons.logout,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
+                  ), // Keep grey for logout
+                  title: Text(
+                    'Çıkış Yap',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Hesabınızdan güvenli çıkış yapın',
+                    style: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.7).round()),
+                    ),
+                  ),
+                  trailing: Icon(
+                    Icons.arrow_forward_ios,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
+                  ),
                   onTap: _logout,
                 ),
                 ListTile(
-                  leading: const Icon(Icons.delete_forever, color: Colors.red),
-                  title: const Text('Hesabı Sil'),
-                  subtitle: const Text('Hesabınızı kalıcı olarak silin'),
-                  trailing: const Icon(Icons.arrow_forward_ios),
+                  leading: Icon(
+                    Icons.delete_forever,
+                    color: Theme.of(context).colorScheme.error,
+                  ), // Use error color
+                  title: Text(
+                    'Hesabı Sil',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Hesabınızı kalıcı olarak silin',
+                    style: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.7).round()),
+                    ),
+                  ),
+                  trailing: Icon(
+                    Icons.arrow_forward_ios,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
+                  ),
                   onTap: _deleteAccount,
                 ),
               ],
@@ -391,58 +661,147 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 24),
 
           // Uygulama bilgileri
-          const Text(
+          Text(
             'Uygulama',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
           const SizedBox(height: 8),
           Card(
+            color: Theme.of(context).colorScheme.surface,
             child: Column(
               children: [
                 ListTile(
-                  leading: const Icon(Icons.info, color: Colors.blue),
-                  title: const Text('Hakkında'),
-                  subtitle: const Text('Askıda uygulaması v1.0.0'),
-                  trailing: const Icon(Icons.arrow_forward_ios),
+                  leading: Icon(
+                    Icons.info,
+                    color: Theme.of(context).colorScheme.primary,
+                  ), // Use primary color
+                  title: Text(
+                    'Hakkında',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Askıda uygulaması v1.0.0',
+                    style: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.7).round()),
+                    ),
+                  ),
+                  trailing: Icon(
+                    Icons.arrow_forward_ios,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
+                  ),
                   onTap: () {
                     showAboutDialog(
                       context: context,
                       applicationName: 'Askıda',
                       applicationVersion: '1.0.0',
-                      applicationIcon: const Icon(
+                      applicationIcon: Icon(
                         Icons.shopping_basket,
                         size: 48,
+                        color:
+                            Theme.of(
+                              context,
+                            ).colorScheme.primary, // Use primary color
                       ),
-                      children: const [
-                        Text('Paylaşım ve yardımlaşma platformu'),
-                        SizedBox(height: 16),
-                        Text('© 2025 Askıda Platformu'),
+                      children: [
+                        Text(
+                          'Paylaşım ve yardımlaşma platformu',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          '© 2025 Askıda Platformu',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
                       ],
                     );
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.policy, color: Colors.purple),
-                  title: const Text('Gizlilik Politikası'),
-                  subtitle: const Text('Verilerinizi nasıl koruduğumuz'),
-                  trailing: const Icon(Icons.arrow_forward_ios),
+                  leading: Icon(
+                    Icons.policy,
+                    color: Theme.of(context).colorScheme.secondary,
+                  ), // Use secondary color
+                  title: Text(
+                    'Gizlilik Politikası',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Verilerinizi nasıl koruduğumuz',
+                    style: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.7).round()),
+                    ),
+                  ),
+                  trailing: Icon(
+                    Icons.arrow_forward_ios,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
+                  ),
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Gizlilik politikası yakında eklenecek'),
+                      SnackBar(
+                        content: const Text(
+                          'Gizlilik politikası yakında eklenecek',
+                        ),
+                        backgroundColor:
+                            Theme.of(
+                              context,
+                            ).colorScheme.secondary, // Use secondary color
                       ),
                     );
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.support, color: Colors.green),
-                  title: const Text('Destek'),
-                  subtitle: const Text('Yardım ve destek alın'),
-                  trailing: const Icon(Icons.arrow_forward_ios),
+                  leading: Icon(
+                    Icons.support,
+                    color: Theme.of(context).colorScheme.primary,
+                  ), // Use primary color
+                  title: Text(
+                    'Destek',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Yardım ve destek alın',
+                    style: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.7).round()),
+                    ),
+                  ),
+                  trailing: Icon(
+                    Icons.arrow_forward_ios,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
+                  ),
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Destek sistemi yakında eklenecek'),
+                      SnackBar(
+                        content: const Text('Destek sistemi yakında eklenecek'),
+                        backgroundColor:
+                            Theme.of(
+                              context,
+                            ).colorScheme.primary, // Use primary color
                       ),
                     );
                   },

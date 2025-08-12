@@ -60,9 +60,9 @@ class _AuthScreenState extends State<AuthScreen> {
     if (_emailController.text.trim().isEmpty ||
         _passwordController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Email ve şifre alanları boş olamaz'),
-          backgroundColor: Colors.red,
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
       return;
@@ -82,9 +82,9 @@ class _AuthScreenState extends State<AuthScreen> {
       if (mounted) {
         _clearForm();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Giriş başarılı!'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: const Text('Giriş başarılı!'),
+            backgroundColor: Theme.of(context).colorScheme.tertiary,
           ),
         );
         // Firebase auth state değişikliği otomatik olarak ana sayfaya yönlendirecek
@@ -106,7 +106,10 @@ class _AuthScreenState extends State<AuthScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(message),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
         );
       }
     } finally {
@@ -125,9 +128,9 @@ class _AuthScreenState extends State<AuthScreen> {
         _nameController.text.trim().isEmpty ||
         _selectedUserType == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Lütfen tüm alanları doldurun'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: const Text('Lütfen tüm alanları doldurun'),
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
       return;
@@ -135,9 +138,9 @@ class _AuthScreenState extends State<AuthScreen> {
 
     if (_passwordController.text != _confirmPasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Şifreler eşleşmiyor'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: const Text('Şifreler eşleşmiyor'),
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
       return;
@@ -146,9 +149,9 @@ class _AuthScreenState extends State<AuthScreen> {
     if (_selectedUserType == UserType.corporate &&
         _organizationController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Kurum adı gereklidir'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: const Text('Kurum adı gereklidir'),
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
       return;
@@ -182,9 +185,9 @@ class _AuthScreenState extends State<AuthScreen> {
         if (mounted) {
           _clearForm();
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Kayıt başarılı!'),
-              backgroundColor: Colors.green,
+            SnackBar(
+              content: const Text('Kayıt başarılı!'),
+              backgroundColor: Theme.of(context).colorScheme.tertiary,
             ),
           );
         }
@@ -205,7 +208,10 @@ class _AuthScreenState extends State<AuthScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(message),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
         );
       }
     } finally {
@@ -230,22 +236,24 @@ class _AuthScreenState extends State<AuthScreen> {
               Icon(
                 Icons.shopping_basket,
                 size: 80,
-                color: Theme.of(context).primaryColor,
+                color: Theme.of(context).colorScheme.primary,
               ),
               const SizedBox(height: 16),
               Text(
                 'Askıda',
                 style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Theme.of(context).primaryColor,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 'Paylaşım ve yardımlaşma platformu',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 48),
@@ -255,22 +263,48 @@ class _AuthScreenState extends State<AuthScreen> {
                 // Login Form
                 TextField(
                   controller: _emailController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Email',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.email),
+                    labelStyle: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.7).round()),
+                    ),
+                    border: const OutlineInputBorder(),
+                    prefixIcon: Icon(
+                      Icons.email,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
+                    ),
                   ),
                   keyboardType: TextInputType.emailAddress,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: _passwordController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Şifre',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.lock),
+                    labelStyle: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.7).round()),
+                    ),
+                    border: const OutlineInputBorder(),
+                    prefixIcon: Icon(
+                      Icons.lock,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
+                    ),
                   ),
                   obscureText: true,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                 ),
                 const SizedBox(height: 20),
                 SizedBox(
@@ -278,18 +312,21 @@ class _AuthScreenState extends State<AuthScreen> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _login,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
                       padding: const EdgeInsets.symmetric(vertical: 15),
                     ),
                     child:
                         _isLoading
-                            ? const CircularProgressIndicator(
-                              color: Colors.white,
+                            ? CircularProgressIndicator(
+                              color: Theme.of(context).colorScheme.onPrimary,
                             )
-                            : const Text(
+                            : Text(
                               'Giriş Yap',
-                              style: TextStyle(fontSize: 16),
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Theme.of(context).colorScheme.onPrimary,
+                              ),
                             ),
                   ),
                 ),
@@ -297,55 +334,116 @@ class _AuthScreenState extends State<AuthScreen> {
                 // Register Form
                 TextField(
                   controller: _nameController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Ad Soyad',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.person),
+                    labelStyle: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.7).round()),
+                    ),
+                    border: const OutlineInputBorder(),
+                    prefixIcon: Icon(
+                      Icons.person,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
+                    ),
+                  ),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: _emailController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Email',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.email),
+                    labelStyle: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.7).round()),
+                    ),
+                    border: const OutlineInputBorder(),
+                    prefixIcon: Icon(
+                      Icons.email,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
+                    ),
                   ),
                   keyboardType: TextInputType.emailAddress,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: _passwordController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Şifre',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.lock),
+                    labelStyle: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.7).round()),
+                    ),
+                    border: const OutlineInputBorder(),
+                    prefixIcon: Icon(
+                      Icons.lock,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
+                    ),
                   ),
                   obscureText: true,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: _confirmPasswordController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Şifre Tekrarı',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.lock_outline),
+                    labelStyle: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.7).round()),
+                    ),
+                    border: const OutlineInputBorder(),
+                    prefixIcon: Icon(
+                      Icons.lock_outline,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
+                    ),
                   ),
                   obscureText: true,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                 ),
                 const SizedBox(height: 16),
 
                 // User Type Selection
-                const Text(
+                Text(
                   'Kullanıcı Türü:',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Row(
                   children: [
                     Expanded(
                       child: RadioListTile<UserType>(
-                        title: const Text('Bireysel'),
+                        title: Text(
+                          'Bireysel',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
                         value: UserType.individual,
                         groupValue: _selectedUserType,
                         onChanged: (UserType? value) {
@@ -353,11 +451,17 @@ class _AuthScreenState extends State<AuthScreen> {
                             _selectedUserType = value;
                           });
                         },
+                        activeColor: Theme.of(context).colorScheme.primary,
                       ),
                     ),
                     Expanded(
                       child: RadioListTile<UserType>(
-                        title: const Text('Kurumsal'),
+                        title: Text(
+                          'Kurumsal',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
                         value: UserType.corporate,
                         groupValue: _selectedUserType,
                         onChanged: (UserType? value) {
@@ -365,6 +469,7 @@ class _AuthScreenState extends State<AuthScreen> {
                             _selectedUserType = value;
                           });
                         },
+                        activeColor: Theme.of(context).colorScheme.primary,
                       ),
                     ),
                   ],
@@ -375,10 +480,23 @@ class _AuthScreenState extends State<AuthScreen> {
                   const SizedBox(height: 16),
                   TextField(
                     controller: _organizationController,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Kurum Adı',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.business),
+                      labelStyle: TextStyle(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withAlpha((255 * 0.7).round()),
+                      ),
+                      border: const OutlineInputBorder(),
+                      prefixIcon: Icon(
+                        Icons.business,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
+                      ),
+                    ),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                 ],
@@ -389,18 +507,23 @@ class _AuthScreenState extends State<AuthScreen> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _register,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
+                      backgroundColor: Theme.of(context).colorScheme.secondary,
+                      foregroundColor:
+                          Theme.of(context).colorScheme.onSecondary,
                       padding: const EdgeInsets.symmetric(vertical: 15),
                     ),
                     child:
                         _isLoading
-                            ? const CircularProgressIndicator(
-                              color: Colors.white,
+                            ? CircularProgressIndicator(
+                              color: Theme.of(context).colorScheme.onSecondary,
                             )
-                            : const Text(
+                            : Text(
                               'Kayıt Ol',
-                              style: TextStyle(fontSize: 16),
+                              style: TextStyle(
+                                fontSize: 16,
+                                color:
+                                    Theme.of(context).colorScheme.onSecondary,
+                              ),
                             ),
                   ),
                 ),
@@ -430,6 +553,9 @@ class _AuthScreenState extends State<AuthScreen> {
                   _isLogin
                       ? 'Hesabınız yok mu? Kayıt olun'
                       : 'Zaten hesabınız var mı? Giriş yapın',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
                 ),
               ),
             ],
@@ -450,6 +576,3 @@ class _AuthScreenState extends State<AuthScreen> {
     super.dispose();
   }
 }
-
-
-

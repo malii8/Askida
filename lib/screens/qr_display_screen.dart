@@ -72,35 +72,39 @@ class _QRDisplayScreenState extends State<QRDisplayScreen> {
                 name: 'QRDisplayScreen',
               );
               // Ürün teslim edildi bildirimi alındı
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(notification.message),
-                    backgroundColor: Colors.green,
-                    duration: const Duration(seconds: 3),
-                  ),
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(notification.message),
+                  backgroundColor: Theme.of(context).colorScheme.tertiary,
+                  duration: const Duration(seconds: 3),
+                ),
+              );
+              _notificationService.markAsRead(notification.id);
+              // Geri sayfaya at
+              Future.delayed(const Duration(seconds: 3), () {
+                final currentContext = context; // Capture context
+                if (!currentContext.mounted) {
+                  return; // Check mounted status immediately
+                }
+                developer.log(
+                  'QRDisplayScreen: Attempting to pop. mounted: ${currentContext.mounted}, canPop: ${Navigator.canPop(currentContext)}',
+                  name: 'QRDisplayScreen',
                 );
-                _notificationService.markAsRead(notification.id);
-                // Geri sayfaya at
-                Future.delayed(const Duration(seconds: 3), () {
+                if (!currentContext.mounted) return; // Redundant but safe check
+                if (Navigator.canPop(currentContext)) {
+                  Navigator.pop(currentContext);
                   developer.log(
-                    'QRDisplayScreen: Attempting to pop. mounted: $mounted, canPop: ${Navigator.canPop(context)}',
+                    'QRDisplayScreen: Screen popped successfully.',
                     name: 'QRDisplayScreen',
                   );
-                  if (mounted && Navigator.canPop(context)) {
-                    Navigator.pop(context);
-                    developer.log(
-                      'QRDisplayScreen: Screen popped successfully.',
-                      name: 'QRDisplayScreen',
-                    );
-                  } else {
-                    developer.log(
-                      'QRDisplayScreen: Cannot pop screen. mounted: $mounted, canPop: ${Navigator.canPop(context)}',
-                      name: 'QRDisplayScreen',
-                    );
-                  }
-                });
-              }
+                } else {
+                  developer.log(
+                    'QRDisplayScreen: Cannot pop screen. mounted: ${currentContext.mounted}, canPop: ${Navigator.canPop(currentContext)}',
+                    name: 'QRDisplayScreen',
+                  );
+                }
+              });
               break; // Sadece ilgili bildirimi işle
             }
           }
@@ -131,34 +135,31 @@ class _QRDisplayScreenState extends State<QRDisplayScreen> {
 
     return PopScope(
       canPop: false, // Prevent popping by default
-      onPopInvoked: (didPop) async {
+      onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return; // If system already popped, do nothing
 
+        final currentContext = context; // Capture context
         if (widget.postType == PostType.firstComeFirstServe) {
-          // Corrected comparison
           developer.log(
             'QRDisplayScreen: Back button pressed for FirstComeFirstServe. Reverting aski status.',
             name: 'QRDisplayScreen',
           );
           final success = await _askiService.revertAskiStatus(widget.askiId);
+          if (!currentContext.mounted) return;
           if (success) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Askı durumu geri alındı.'),
-                  backgroundColor: Colors.orange,
-                ),
-              );
-            }
+            ScaffoldMessenger.of(currentContext).showSnackBar(
+              SnackBar(
+                content: const Text('Askı durumu geri alındı.'),
+                backgroundColor: Theme.of(currentContext).colorScheme.secondary,
+              ),
+            );
           } else {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Askı durumu geri alınamadı.'),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
+            ScaffoldMessenger.of(currentContext).showSnackBar(
+              SnackBar(
+                content: const Text('Askı durumu geri alınamadı.'),
+                backgroundColor: Theme.of(currentContext).colorScheme.error,
+              ),
+            );
           }
         } else {
           developer.log(
@@ -166,15 +167,14 @@ class _QRDisplayScreenState extends State<QRDisplayScreen> {
             name: 'QRDisplayScreen',
           );
         }
-        if (mounted) {
-          Navigator.pop(context);
-        }
+        if (!currentContext.mounted) return;
+        Navigator.pop(currentContext);
       },
       child: Scaffold(
         appBar: AppBar(
           title: const Text('QR Kod'),
           backgroundColor: Theme.of(context).colorScheme.primary,
-          foregroundColor: Colors.white,
+          foregroundColor: Theme.of(context).colorScheme.onPrimary,
         ),
         body: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -185,19 +185,26 @@ class _QRDisplayScreenState extends State<QRDisplayScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withAlpha((255 * 0.1).round()),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.blue.shade200),
+                  border: Border.all(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withAlpha((255 * 0.3).round()),
+                  ),
                 ),
                 child: Column(
                   children: [
                     const Icon(Icons.info, color: Colors.blue, size: 32),
                     const SizedBox(height: 12),
-                    const Text(
+                    Text(
                       'Askıdan alınacak ürünün QR kodunu okutun.',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -206,7 +213,9 @@ class _QRDisplayScreenState extends State<QRDisplayScreen> {
                       'QR kodunu kamera ile okutun',
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.grey.shade600,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withAlpha((255 * 0.6).round()),
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -222,11 +231,13 @@ class _QRDisplayScreenState extends State<QRDisplayScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color.fromRGBO(128, 128, 128, 0.3),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.shadow.withAlpha((255 * 0.3).round()),
                           spreadRadius: 2,
                           blurRadius: 8,
                           offset: const Offset(0, 4),
@@ -240,7 +251,8 @@ class _QRDisplayScreenState extends State<QRDisplayScreen> {
                           data: qrString,
                           version: QrVersions.auto,
                           size: 250.0,
-                          backgroundColor: Colors.white,
+                          backgroundColor:
+                              Theme.of(context).colorScheme.surface,
                           errorCorrectionLevel: QrErrorCorrectLevel.M,
                         ),
                         const SizedBox(height: 16),
@@ -248,7 +260,8 @@ class _QRDisplayScreenState extends State<QRDisplayScreen> {
                           'QR Kod Tarayıcısı Buraya Gelecek',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.grey.shade600,
+                            color: Theme.of(context).colorScheme.onSurface
+                                .withAlpha((255 * 0.6).round()),
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -264,41 +277,54 @@ class _QRDisplayScreenState extends State<QRDisplayScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
+                  color: Theme.of(context).colorScheme.surfaceContainer,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Ürün Bilgileri:',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.shopping_bag,
                           size: 20,
-                          color: Colors.grey,
+                          color: Theme.of(context).colorScheme.onSurface
+                              .withAlpha((255 * 0.6).round()),
                         ),
                         const SizedBox(width: 8),
-                        Text('Ürün: ${widget.productName}'),
+                        Text(
+                          'Ürün: ${widget.productName}',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.business,
                           size: 20,
-                          color: Colors.grey,
+                          color: Theme.of(context).colorScheme.onSurface
+                              .withAlpha((255 * 0.6).round()),
                         ),
                         const SizedBox(width: 8),
-                        Text('Firma: ${widget.corporateName}'),
+                        Text(
+                          'Firma: ${widget.corporateName}',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
                       ],
                     ),
                   ],

@@ -12,6 +12,7 @@ class UserModel {
   final String? companyName; // Şirket adı (kurumsal kullanıcılar için)
   final String? taxNumber; // Vergi numarası (kurumsal kullanıcılar için)
   final String? corporateId; // Kurumsal kullanıcılar için şirket ID'si
+  final String? profileImageUrl; // Yeni eklendi
 
   // Getter'lar için alias'lar
   String get name => fullName;
@@ -30,6 +31,7 @@ class UserModel {
     this.companyName,
     this.taxNumber,
     this.corporateId,
+    this.profileImageUrl, // Constructor'a eklendi
   }) : updatedAt = updatedAt ?? createdAt;
 
   // Firestore'dan veri okuma
@@ -53,7 +55,8 @@ class UserModel {
       isApproved: map['isApproved'] ?? false,
       companyName: map['companyName'],
       taxNumber: map['taxNumber'],
-      corporateId: map['corporateId'], // corporateId eklendi
+      corporateId: map['corporateId'],
+      profileImageUrl: map['profileImageUrl'], // fromMap'e eklendi
     );
   }
 
@@ -72,6 +75,8 @@ class UserModel {
       'isApproved': isApproved,
       'companyName': companyName,
       'taxNumber': taxNumber,
+      'corporateId': corporateId,
+      'profileImageUrl': profileImageUrl, // toMap'e eklendi
     };
   }
 
@@ -89,7 +94,8 @@ class UserModel {
       'isApproved': isApproved,
       'companyName': companyName,
       'taxNumber': taxNumber,
-      'corporateId': corporateId, // corporateId eklendi
+      'corporateId': corporateId,
+      'profileImageUrl': profileImageUrl, // toJson'a eklendi
     };
   }
 
@@ -108,6 +114,7 @@ class UserModel {
     String? companyName,
     String? taxNumber,
     String? corporateId,
+    String? profileImageUrl, // copyWith'e eklendi
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -123,6 +130,7 @@ class UserModel {
       companyName: companyName ?? this.companyName,
       taxNumber: taxNumber ?? this.taxNumber,
       corporateId: corporateId ?? this.corporateId,
+      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
     );
   }
 }
